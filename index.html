@@ -1,0 +1,2361 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>高中物理 · 力学模型实验室（3D）</title>
+<style>
+:root{
+  --acc:#0ea5e9; --bg:#0b1220; --panel:#ffffff; --line:#e2e8f0; --txt:#0f172a;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:var(--txt);display:flex;flex-direction:column;overflow:hidden}
+/* ---------- 顶栏 ---------- */
+header{height:54px;background:linear-gradient(90deg,#0ea5e9,#6366f1);color:#fff;display:flex;align-items:center;padding:0 18px;gap:12px;flex:none}
+header .title{font-size:19px;font-weight:700;letter-spacing:.5px}
+header .sub{font-size:12px;opacity:.85;font-weight:400;margin-left:8px}
+header .spacer{flex:1}
+header button{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13px}
+header button:hover{background:rgba(255,255,255,.3)}
+/* ---------- 模型选项卡 ---------- */
+nav{background:#101d33;display:flex;gap:6px;padding:8px 12px;flex:none;flex-wrap:wrap}
+.tab{background:#1e293b;color:#cbd5e1;border:1px solid #334155;border-radius:9px;padding:7px 14px;cursor:pointer;font-size:13.5px;transition:all .15s}
+.tab:hover{border-color:#38bdf8;color:#fff}
+.tab.active{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:600}
+/* ---------- 主布局 ---------- */
+main{flex:1;display:flex;gap:10px;padding:10px;min-height:0}
+aside#controls{width:302px;flex:none;background:var(--panel);border-radius:12px;overflow-y:auto;padding:12px 14px;min-height:0}
+section#center{flex:1;display:flex;flex-direction:column;gap:8px;min-width:0}
+aside#right{width:372px;flex:none;background:var(--panel);border-radius:12px;overflow-y:auto;padding:12px 14px;min-height:0}
+/* ---------- 工具栏 ---------- */
+#toolbar{background:var(--panel);border-radius:10px;padding:7px 10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex:none}
+#toolbar button{background:#f1f5f9;border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13px;font-weight:600}
+#toolbar button:hover{background:#e2e8f0}
+#toolbar button.play{background:#16a34a;color:#fff;border-color:#16a34a}
+#toolbar button.play:hover{background:#15803d}
+#toolbar label{font-size:12.5px;display:flex;align-items:center;gap:4px;color:#475569;user-select:none}
+#toolbar select{border:1px solid var(--line);border-radius:7px;padding:4px 6px;font-size:12.5px;background:#fff}
+.sep{width:1px;height:22px;background:var(--line)}
+/* ---------- 3D 视图 ---------- */
+#view3d{flex:1;position:relative;border-radius:12px;overflow:hidden;min-height:280px;background:radial-gradient(120% 120% at 50% 20%,#1c2f4f 0%,#0b1220 70%)}
+#view3d canvas{display:block}
+#readouts{position:absolute;top:10px;left:12px;display:flex;flex-wrap:wrap;gap:6px;pointer-events:none;z-index:5;max-width:75%}
+.chip{background:rgba(2,6,23,.72);color:#e2e8f0;padding:3px 9px;border-radius:6px;font-size:12.5px;font-variant-numeric:tabular-nums;border:1px solid rgba(148,163,184,.25);backdrop-filter:blur(2px)}
+.chip b{color:#fff;font-weight:600}
+#statusbar{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(2,6,23,.8);color:#fbbf24;padding:5px 16px;border-radius:999px;font-size:13px;pointer-events:none;z-index:5;border:1px solid rgba(251,191,36,.35);white-space:nowrap;max-width:60%;overflow:hidden;text-overflow:ellipsis}
+#angleBadge{position:absolute;top:10px;right:14px;z-index:5;pointer-events:none;display:none;background:rgba(2,6,23,.85);border:2px solid #fbbf24;color:#fde68a;border-radius:12px;padding:6px 16px;font-size:21px;font-weight:800;font-variant-numeric:tabular-nums;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.4)}
+#angleBadge span{display:block;font-size:11.5px;color:#94a3b8;font-weight:400;margin-top:2px}
+/* ---------- 图形 ---------- */
+#graphwrap{height:250px;flex:none;background:var(--panel);border-radius:12px;padding:8px 10px 4px}
+canvas#graph{width:100%;height:204px;display:block}
+#graphlegend{display:flex;gap:16px;padding:2px 8px;font-size:12px;color:#334155;font-variant-numeric:tabular-nums;flex-wrap:wrap}
+#graphlegend .lg{display:flex;align-items:center;gap:5px}
+#graphlegend .sw{width:14px;height:4px;border-radius:2px;display:inline-block}
+/* ---------- 控制面板 ---------- */
+.ctlgroup{display:none}
+.ctlgroup.show{display:block}
+h3.ctl-title{margin:4px 0 10px;font-size:14px;color:#0f172a;border-left:4px solid var(--acc);padding-left:8px}
+.ctl{margin-bottom:11px}
+.ctl label.lb{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;color:#334155;margin-bottom:3px}
+.ctl label.lb b{color:#0f172a;font-weight:600}
+.ctl label.lb span{color:#0284c7;font-weight:600;font-variant-numeric:tabular-nums}
+.row{display:flex;gap:8px;align-items:center}
+input[type=range]{flex:1;accent-color:var(--acc);height:22px}
+input[type=number]{width:72px;border:1px solid var(--line);border-radius:7px;padding:4px 6px;font-size:12.5px}
+select.sel{width:100%;border:1px solid var(--line);border-radius:7px;padding:5px 8px;font-size:13px;background:#fff}
+.btnrow{display:flex;gap:6px;margin-top:4px}
+.btnrow button{flex:1;background:#f1f5f9;border:1px solid var(--line);border-radius:8px;padding:5px 0;cursor:pointer;font-size:13px;font-weight:600}
+.btnrow button:hover{background:#e2e8f0}
+#incline-theta-big{text-align:center;font-size:34px;font-weight:800;color:var(--acc);line-height:1.1;font-variant-numeric:tabular-nums}
+#incline-theta-note{text-align:center;font-size:12px;color:#64748b;margin:2px 0 8px}
+/* ---------- 受力分析面板 ---------- */
+#fa-toggles{display:flex;gap:14px;margin:4px 0 8px;font-size:12.5px;color:#475569;flex-wrap:wrap}
+#fa-toggles label{display:flex;align-items:center;gap:4px;cursor:pointer;user-select:none}
+#faExtra{display:flex;gap:6px;margin:0 0 8px}
+#faExtra button{background:#eef2ff;border:1px solid #c7d2fe;color:#4338ca;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:12.5px;font-weight:600}
+#faExtra button.on{background:#6366f1;color:#fff;border-color:#6366f1}
+canvas#faCanvas{width:100%;height:236px;display:block;background:#f8fafc;border:1px solid var(--line);border-radius:10px}
+.panel-h{margin:12px 0 6px;font-size:13px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:6px}
+.panel-h::before{content:"";width:4px;height:14px;background:var(--acc);border-radius:2px}
+.fline{display:flex;align-items:center;gap:8px;font-size:12.5px;margin:3.5px 0;color:#334155}
+.dot{width:11px;height:11px;border-radius:50%;flex:none;border:1px solid rgba(0,0,0,.15)}
+.fline b{margin-left:auto;font-variant-numeric:tabular-nums;color:#0f172a;font-weight:600}
+.eqbox{background:#f1f5f9;border-radius:8px;padding:7px 10px;font-size:12.5px;margin:5px 0;font-family:ui-monospace,Consolas,monospace;line-height:1.7;color:#1e293b;font-variant-numeric:tabular-nums}
+.know{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px 11px;font-size:12.3px;line-height:1.75;color:#1e40af}
+.know li{margin-left:-14px}
+.status-box{background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:8px;padding:7px 10px;font-size:12.5px;margin-top:6px;line-height:1.6}
+.ebar{margin:5px 0}
+.ebar .lbl{display:flex;justify-content:space-between;font-size:12px;color:#334155}
+.ebar .lbl b{font-variant-numeric:tabular-nums}
+.ebar .trk{background:#e2e8f0;height:13px;border-radius:7px;overflow:hidden;margin-top:2px}
+.ebar .fill{height:100%;border-radius:7px;transition:width .08s linear}
+/* ---------- 帮助弹窗 ---------- */
+#helpModal{position:fixed;inset:0;background:rgba(2,6,23,.6);z-index:50;display:flex;align-items:center;justify-content:center}
+#helpModal[hidden]{display:none}
+#helpBox{background:#fff;border-radius:14px;padding:20px 24px;max-width:560px;width:92%;max-height:80vh;overflow:auto;line-height:1.8;font-size:13.5px}
+#helpBox h2{margin:0 0 10px;font-size:17px}
+#helpBox li{margin:4px 0}
+#helpBox .close{float:right;background:#f1f5f9;border:1px solid var(--line);border-radius:8px;padding:4px 12px;cursor:pointer}
+footer{flex:none;padding:4px 14px;font-size:11px;color:#64748b;background:#0b1220;display:flex;justify-content:space-between}
+/* ---------- 手机 / 微信内置浏览器适配 ---------- */
+@media (max-width:1150px){
+  body{overflow:auto}
+  main{flex-direction:column;overflow:visible;padding:8px}
+  aside#controls{order:1;width:100%;flex:none;max-height:none}
+  section#center{order:2;min-height:660px;flex:auto}
+  aside#right{order:3;width:100%;flex:none;max-height:none}
+  #view3d{min-height:340px}
+  #graphwrap{height:232px}
+  canvas#graph{height:186px}
+  header .sub{display:none}
+  nav{padding:6px 8px;gap:4px}
+  .tab{padding:6px 9px;font-size:12.5px}
+  #statusbar{font-size:12px;max-width:80%}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title">🧲 高中物理 · 力学模型实验室<span class="sub">3D 交互模拟 · 牛顿力学 · 含实时受力分析</span></div>
+  <div class="spacer"></div>
+  <button id="helpBtn">📖 使用说明</button>
+</header>
+
+<nav id="tabs">
+  <button class="tab active" data-model="slider">🧊 滑块模型</button>
+  <button class="tab" data-model="incline">⛰️ 斜面模型</button>
+  <button class="tab" data-model="belt">🛤️ 传送带模型</button>
+  <button class="tab" data-model="spring">🌀 弹簧振子</button>
+  <button class="tab" data-model="linked">🔗 连接体模型</button>
+  <button class="tab" data-model="springlinked">⚙️ 弹簧连接体</button>
+</nav>
+
+<main>
+  <!-- ================= 左侧：参数面板 ================= -->
+  <aside id="controls">
+    <!-- 滑块模型 -->
+    <div class="ctlgroup show" id="cg-slider">
+      <h3 class="ctl-title">🧊 滑块模型参数</h3>
+      <div class="ctl"><label class="lb">实验预设</label><select class="sel" id="slider-preset"></select></div>
+      <div class="ctl"><label class="lb">质量 m <span id="slider-m-v"></span></label>
+        <div class="row"><input type="range" id="slider-m" min="0.5" max="10" step="0.1" value="2"><input type="number" id="slider-m-num" min="0.5" max="10" step="0.1" value="2"></div></div>
+      <div class="ctl"><label class="lb">动摩擦因数 μ <span id="slider-mu-v"></span></label>
+        <div class="row"><input type="range" id="slider-mu" min="0" max="1" step="0.01" value="0.2"><input type="number" id="slider-mu-num" min="0" max="1" step="0.01" value="0.2"></div></div>
+      <div class="ctl"><label class="lb">初速度 v₀（m/s，负向左）<span id="slider-v0-v"></span></label>
+        <div class="row"><input type="range" id="slider-v0" min="-10" max="10" step="0.1" value="0"><input type="number" id="slider-v0-num" min="-10" max="10" step="0.1" value="0"></div></div>
+      <div class="ctl"><label class="lb">水平外力 F（N，负向左）<span id="slider-F-v"></span></label>
+        <div class="row"><input type="range" id="slider-F" min="-20" max="20" step="0.5" value="10"><input type="number" id="slider-F-num" min="-20" max="20" step="0.5" value="10"></div></div>
+      <div class="ctl"><label class="lb">跑道长度 L（m）<span id="slider-L-v"></span></label>
+        <div class="row"><input type="range" id="slider-L" min="10" max="50" step="1" value="30"><input type="number" id="slider-L-num" min="10" max="50" step="1" value="30"></div></div>
+      <div class="ctl"><label class="lb">初始位置 x₀（m）<span id="slider-x0-v"></span></label>
+        <div class="row"><input type="range" id="slider-x0" min="0.5" max="29" step="0.5" value="2"><input type="number" id="slider-x0-num" min="0.5" max="29" step="0.5" value="2"></div></div>
+    </div>
+
+    <!-- 斜面模型 -->
+    <div class="ctlgroup" id="cg-incline">
+      <h3 class="ctl-title">⛰️ 斜面模型参数</h3>
+      <div class="ctl"><label class="lb">实验预设</label><select class="sel" id="incline-preset"></select></div>
+      <div class="ctl">
+        <div id="incline-theta-big">30.0°</div>
+        <div id="incline-theta-note">tanθ = 0.577</div>
+        <label class="lb">斜面倾角 θ <span id="incline-th-v"></span></label>
+        <div class="row"><input type="range" id="incline-th" min="0" max="85" step="0.1" value="30"><input type="number" id="incline-th-num" min="0" max="85" step="0.1" value="30"></div>
+        <div class="btnrow"><button data-d="-5">−5°</button><button data-d="-1">−1°</button><button data-d="+1">+1°</button><button data-d="+5">+5°</button></div>
+      </div>
+      <div class="ctl"><label class="lb">质量 m（kg）<span id="incline-m-v"></span></label>
+        <div class="row"><input type="range" id="incline-m" min="0.5" max="10" step="0.1" value="2"><input type="number" id="incline-m-num" min="0.5" max="10" step="0.1" value="2"></div></div>
+      <div class="ctl"><label class="lb">动摩擦因数 μ <span id="incline-mu-v"></span></label>
+        <div class="row"><input type="range" id="incline-mu" min="0" max="1" step="0.01" value="0.15"><input type="number" id="incline-mu-num" min="0" max="1" step="0.01" value="0.15"></div></div>
+      <div class="ctl"><label class="lb">初速度 v₀（m/s，正=沿面上滑）<span id="incline-v0-v"></span></label>
+        <div class="row"><input type="range" id="incline-v0" min="-8" max="8" step="0.1" value="0"><input type="number" id="incline-v0-num" min="-8" max="8" step="0.1" value="0"></div></div>
+      <div class="ctl"><label class="lb">初始位置 s₀（距底端，m）<span id="incline-s0-v"></span></label>
+        <div class="row"><input type="range" id="incline-s0" min="0.5" max="9.5" step="0.5" value="8"><input type="number" id="incline-s0-num" min="0.5" max="9.5" step="0.5" value="8"></div></div>
+      <div class="ctl"><label class="lb">斜面长度 L（m）<span id="incline-L-v"></span></label>
+        <div class="row"><input type="range" id="incline-L" min="5" max="15" step="0.5" value="10"><input type="number" id="incline-L-num" min="5" max="15" step="0.5" value="10"></div></div>
+    </div>
+
+    <!-- 传送带模型 -->
+    <div class="ctlgroup" id="cg-belt">
+      <h3 class="ctl-title">🛤️ 传送带模型参数</h3>
+      <div class="ctl"><label class="lb">实验预设</label><select class="sel" id="belt-preset"></select></div>
+      <div class="ctl"><label class="lb">传送带速度 v带（m/s，负=向左）<span id="belt-vb-v"></span></label>
+        <div class="row"><input type="range" id="belt-vb" min="-4" max="4" step="0.1" value="2"><input type="number" id="belt-vb-num" min="-4" max="4" step="0.1" value="2"></div></div>
+      <div class="ctl"><label class="lb">物块初速度 v₀（m/s，负=向左）<span id="belt-v0-v"></span></label>
+        <div class="row"><input type="range" id="belt-v0" min="-6" max="6" step="0.1" value="0"><input type="number" id="belt-v0-num" min="-6" max="6" step="0.1" value="0"></div></div>
+      <div class="ctl"><label class="lb">动摩擦因数 μ <span id="belt-mu-v"></span></label>
+        <div class="row"><input type="range" id="belt-mu" min="0" max="1" step="0.01" value="0.2"><input type="number" id="belt-mu-num" min="0" max="1" step="0.01" value="0.2"></div></div>
+      <div class="ctl"><label class="lb">物块质量 m（kg）<span id="belt-m-v"></span></label>
+        <div class="row"><input type="range" id="belt-m" min="0.5" max="10" step="0.1" value="1"><input type="number" id="belt-m-num" min="0.5" max="10" step="0.1" value="1"></div></div>
+      <div class="ctl"><label class="lb">传送带长度 L（m）<span id="belt-L-v"></span></label>
+        <div class="row"><input type="range" id="belt-L" min="4" max="20" step="0.5" value="10"><input type="number" id="belt-L-num" min="4" max="20" step="0.5" value="10"></div></div>
+      <div class="ctl"><label class="lb">初始位置 x₀（m）<span id="belt-x0-v"></span></label>
+        <div class="row"><input type="range" id="belt-x0" min="0.5" max="19" step="0.5" value="0.5"><input type="number" id="belt-x0-num" min="0.5" max="19" step="0.5" value="0.5"></div></div>
+    </div>
+
+    <!-- 弹簧振子 -->
+    <div class="ctlgroup" id="cg-spring">
+      <h3 class="ctl-title">🌀 弹簧振子参数</h3>
+      <div class="ctl"><label class="lb">实验预设</label><select class="sel" id="spring-preset"></select></div>
+      <div class="ctl"><label class="lb">质量 m（kg）<span id="spring-m-v"></span></label>
+        <div class="row"><input type="range" id="spring-m" min="0.5" max="10" step="0.1" value="1"><input type="number" id="spring-m-num" min="0.5" max="10" step="0.1" value="1"></div></div>
+      <div class="ctl"><label class="lb">劲度系数 k（N/m）<span id="spring-k-v"></span></label>
+        <div class="row"><input type="range" id="spring-k" min="1" max="100" step="1" value="10"><input type="number" id="spring-k-num" min="1" max="100" step="1" value="10"></div></div>
+      <div class="ctl"><label class="lb">初始位移 x₀（m，正=拉伸）<span id="spring-x0-v"></span></label>
+        <div class="row"><input type="range" id="spring-x0" min="-2" max="2" step="0.05" value="1"><input type="number" id="spring-x0-num" min="-2" max="2" step="0.05" value="1"></div></div>
+      <div class="ctl"><label class="lb">初速度 v₀（m/s）<span id="spring-v0-v"></span></label>
+        <div class="row"><input type="range" id="spring-v0" min="-4" max="4" step="0.1" value="0"><input type="number" id="spring-v0-num" min="-4" max="4" step="0.1" value="0"></div></div>
+      <div class="ctl"><label class="lb">阻尼系数 b（0=无阻尼）<span id="spring-b-v"></span></label>
+        <div class="row"><input type="range" id="spring-b" min="0" max="2" step="0.05" value="0"><input type="number" id="spring-b-num" min="0" max="2" step="0.05" value="0"></div></div>
+    </div>
+
+    <!-- 连接体 -->
+    <div class="ctlgroup" id="cg-linked">
+      <h3 class="ctl-title">🔗 连接体参数（两物块紧靠，水平力推动）</h3>
+      <div class="ctl"><label class="lb">实验预设</label><select class="sel" id="linked-preset"></select></div>
+      <div class="ctl"><label class="lb">物块 1 质量 m₁（kg）<span id="linked-m1-v"></span></label>
+        <div class="row"><input type="range" id="linked-m1" min="0.5" max="10" step="0.1" value="2"><input type="number" id="linked-m1-num" min="0.5" max="10" step="0.1" value="2"></div></div>
+      <div class="ctl"><label class="lb">物块 2 质量 m₂（kg）<span id="linked-m2-v"></span></label>
+        <div class="row"><input type="range" id="linked-m2" min="0.5" max="10" step="0.1" value="3"><input type="number" id="linked-m2-num" min="0.5" max="10" step="0.1" value="3"></div></div>
+      <div class="ctl"><label class="lb">水平推力 F（N）<span id="linked-F-v"></span></label>
+        <div class="row"><input type="range" id="linked-F" min="0" max="40" step="0.5" value="10"><input type="number" id="linked-F-num" min="0" max="40" step="0.5" value="10"></div></div>
+      <div class="ctl"><label class="lb">动摩擦因数 μ（地面）<span id="linked-mu-v"></span></label>
+        <div class="row"><input type="range" id="linked-mu" min="0" max="0.5" step="0.01" value="0"><input type="number" id="linked-mu-num" min="0" max="0.5" step="0.01" value="0"></div></div>
+      <div class="ctl"><label class="lb">施力对象</label><select class="sel" id="linked-apply"><option value="m1">推 m₁（左边物块）</option><option value="m2">推 m₂（右边物块）</option></select></div>
+    </div>
+
+    <!-- 弹簧连接体 -->
+    <div class="ctlgroup" id="cg-springlinked">
+      <h3 class="ctl-title">⚙️ 弹簧连接体参数（两物块由轻弹簧连接）</h3>
+      <div class="ctl"><label class="lb">实验预设</label><select class="sel" id="springlinked-preset"></select></div>
+      <div class="ctl"><label class="lb">物块 1 质量 m₁（kg）<span id="springlinked-m1-v"></span></label>
+        <div class="row"><input type="range" id="springlinked-m1" min="0.5" max="10" step="0.1" value="1"><input type="number" id="springlinked-m1-num" min="0.5" max="10" step="0.1" value="1"></div></div>
+      <div class="ctl"><label class="lb">物块 2 质量 m₂（kg）<span id="springlinked-m2-v"></span></label>
+        <div class="row"><input type="range" id="springlinked-m2" min="0.5" max="10" step="0.1" value="1"><input type="number" id="springlinked-m2-num" min="0.5" max="10" step="0.1" value="1"></div></div>
+      <div class="ctl"><label class="lb">劲度系数 k（N/m）<span id="springlinked-k-v"></span></label>
+        <div class="row"><input type="range" id="springlinked-k" min="1" max="100" step="1" value="10"><input type="number" id="springlinked-k-num" min="1" max="100" step="1" value="10"></div></div>
+      <div class="ctl"><label class="lb">初始形变 |Δl₀|（m）<span id="springlinked-x0-v"></span></label>
+        <div class="row"><input type="range" id="springlinked-x0" min="0" max="1.5" step="0.05" value="0.5"><input type="number" id="springlinked-x0-num" min="0" max="1.5" step="0.05" value="0.5"></div></div>
+      <div class="ctl"><label class="lb">形变类型</label><select class="sel" id="springlinked-xtype"><option value="compress">压缩</option><option value="stretch">拉伸</option></select></div>
+      <div class="ctl"><label class="lb">系统整体初速度 v_c（m/s）<span id="springlinked-vc0-v"></span></label>
+        <div class="row"><input type="range" id="springlinked-vc0" min="-3" max="3" step="0.1" value="0"><input type="number" id="springlinked-vc0-num" min="-3" max="3" step="0.1" value="0"></div></div>
+    </div>
+  </aside>
+
+  <!-- ================= 中间：3D + 图形 ================= -->
+  <section id="center">
+    <div id="toolbar">
+      <button class="play" id="btnPlay">▶ 播放</button>
+      <button id="btnPause">⏸ 暂停</button>
+      <button id="btnStep">⏭ 单步 (0.05s)</button>
+      <button id="btnReset">↺ 重置</button>
+      <span class="sep"></span>
+      <label>速度
+        <select id="selSpeed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select>
+      </label>
+      <label>图像窗口
+        <select id="selWindow"><option value="5">5 s</option><option value="10" selected>10 s</option><option value="20">20 s</option><option value="30">30 s</option></select>
+      </label>
+      <span class="sep"></span>
+      <label><input type="checkbox" id="chkForces" checked> 受力箭头</label>
+      <label><input type="checkbox" id="chkLabels" checked> 标注</label>
+      <label><input type="checkbox" id="chkVel" checked> 速度箭头</label>
+      <label><input type="checkbox" id="chkFollow" checked> 镜头跟随</label>
+    </div>
+
+    <div id="view3d">
+      <div id="readouts"></div>
+      <div id="angleBadge">θ = <b>30.0°</b><span></span></div>
+      <div id="statusbar">点击「▶ 播放」开始模拟</div>
+    </div>
+
+    <div id="graphwrap">
+      <canvas id="graph" width="1100" height="204"></canvas>
+      <div id="graphlegend"></div>
+    </div>
+  </section>
+
+  <!-- ================= 右侧：受力分析 ================= -->
+  <aside id="right">
+    <h3 class="ctl-title" style="margin-top:0">🔍 受力分析（实时）</h3>
+    <div id="fa-toggles">
+      <label><input type="checkbox" id="faDecomp" checked> 重力分解</label>
+      <label><input type="checkbox" id="faRelative" checked> 相对速度</label>
+    </div>
+    <div id="faExtra"></div>
+    <canvas id="faCanvas" width="680" height="472"></canvas>
+    <div class="panel-h">力的大小</div>
+    <div id="faForces"></div>
+    <div class="panel-h">运动方程（代入实时数值）</div>
+    <div id="faEqns"></div>
+    <div id="faEnergy"></div>
+    <div class="panel-h">模型状态分析</div>
+    <div id="faStatus"></div>
+    <div class="panel-h">📚 知识要点</div>
+    <div class="know" id="faKnowledge"></div>
+  </aside>
+</main>
+
+<footer>
+  <span>g = 9.8 m/s² · 牛顿第二定律 F合 = ma · 重力 mg 竖直向下 · 支持力 N 垂直接触面 · 摩擦力 f 与相对运动方向相反</span>
+  <span>高中物理 · 力学模型实验室 v1.0</span>
+</footer>
+
+<!-- 帮助弹窗 -->
+<div id="helpModal" hidden>
+  <div id="helpBox">
+    <button class="close" id="helpClose">关闭 ✕</button>
+    <h2>📖 使用说明</h2>
+    <ul>
+      <li><b>视角操作：</b>鼠标左键拖拽旋转 3D 场景，滚轮缩放，右键拖拽平移；勾选「镜头跟随」可自动跟踪物块。</li>
+      <li><b>实验流程：</b>选择上方模型选项卡 → 在左侧调节参数（或选实验预设）→ 点击「↺ 重置」→「▶ 播放」。</li>
+      <li><b>精细观察：</b>可用「⏭ 单步」每次前进 0.05 s，配合「速度 0.25×」慢放观察临界时刻（如共速、最高点）。</li>
+      <li><b>受力分析：</b>右侧面板实时显示 3D 受力箭头、2D 受力示意图、各力数值、运动方程和状态判断；斜面模型可勾选「重力分解」查看 mg sinθ / mg cosθ。</li>
+      <li><b>图像：</b>中下方实时绘制 x-t、v-t、a-t 等图像，可切换时间窗口。</li>
+      <li><b>提示：</b>修改参数后请点击「重置」使新参数生效；弹簧模型右侧有能量条形图验证机械能守恒。</li>
+      <li><b>适用场景：</b>配合高中物理必修一 / 必修二「力与运动」「牛顿运动定律」章节使用。</li>
+    </ul>
+  </div>
+</div>
+
+<script src="three.min.js"></script>
+<script src="OrbitControls.js"></script>
+<script>
+'use strict';
+/* ============================================================
+   高中物理 · 力学模型实验室
+   引擎：Three.js r128（本地） + 自研牛顿力学数值积分
+   ============================================================ */
+
+/* ---------------- 工具函数 ---------------- */
+const $ = id => document.getElementById(id);
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const fmt = (x, d) => { x = Math.abs(x) < 1e-9 ? 0 : x; return x.toFixed(d === undefined ? 2 : d); };
+const G = 9.8, RAD = Math.PI / 180;
+const COL = {
+  gravity: 0x3b82f6, normal: 0x22c55e, friction: 0xef4444, applied: 0xf97316,
+  spring: 0xa855f7, contact: 0x06b6d4, velocity: 0x94a3b8, comp: 0x93c5fd
+};
+const CSS = {
+  gravity: '#3b82f6', normal: '#22c55e', friction: '#ef4444', applied: '#f97316',
+  spring: '#a855f7', contact: '#06b6d4', velocity: '#94a3b8', comp: '#93c5fd'
+};
+
+/* ---------------- 3D 场景 ---------------- */
+let scene, camera, renderer, controls;
+const ARROWS = new THREE.Group();   // 受力箭头
+const LABELS = new THREE.Group();   // 标注精灵
+let ground, grid;
+
+function initThree() {
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0b1220);
+  scene.fog = new THREE.Fog(0x0b1220, 40, 140);
+
+  camera = new THREE.PerspectiveCamera(50, 1, 0.1, 400);
+  camera.position.set(8, 6, 12);
+
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  const v3d = $('view3d');
+  v3d.appendChild(renderer.domElement);
+  renderer.domElement.style.width = '100%';
+  renderer.domElement.style.height = '100%';
+
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.12;
+  controls.minDistance = 2.5;
+  controls.maxDistance = 70;
+  controls.maxPolarAngle = 1.52;
+  controls.target.set(2, 1, 0);
+
+  // 灯光
+  const hemi = new THREE.HemisphereLight(0xdfe8ff, 0x1a2438, 0.85);
+  scene.add(hemi);
+  const sun = new THREE.DirectionalLight(0xffffff, 1.15);
+  sun.position.set(12, 18, 10);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.camera.left = -40; sun.shadow.camera.right = 40;
+  sun.shadow.camera.top = 30; sun.shadow.camera.bottom = -15;
+  sun.shadow.camera.far = 100;
+  sun.shadow.bias = -0.0004;
+  scene.add(sun);
+
+  // 地面
+  ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(400, 400),
+    new THREE.MeshStandardMaterial({ color: 0x16212f, roughness: 0.95 })
+  );
+  ground.rotation.x = -Math.PI / 2;
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  grid = new THREE.GridHelper(160, 160, 0x2e4058, 0x1d2b3e);
+  grid.position.y = 0.01;
+  scene.add(grid);
+
+  scene.add(ARROWS);
+  scene.add(LABELS);
+
+  window.addEventListener('resize', onResize);
+  onResize();
+}
+function onResize() {
+  const v3d = $('view3d');
+  const w = v3d.clientWidth, h = v3d.clientHeight;
+  if (w === 0 || h === 0) return;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+}
+
+/* ---------------- 共享材质 / 网格构建 ---------------- */
+const matBlockStd = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.5, metalness: 0.08 });
+const matBlockLines = new THREE.LineBasicMaterial({ color: 0x0f172a, transparent: true, opacity: 0.5 });
+const matSpring = new THREE.MeshStandardMaterial({ color: 0xc4b5fd, roughness: 0.4, metalness: 0.5 });
+const matWall = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.7 });
+const matWedge = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.6 });
+const matBeltBody = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.8 });
+const matRoller = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.35, metalness: 0.6 });
+const matSlab = new THREE.MeshStandardMaterial({ color: 0x283748, roughness: 0.9 });
+const matFlagG = new THREE.MeshStandardMaterial({ color: 0x22c55e, emissive: 0x14532d, emissiveIntensity: 0.5 });
+const matFlagR = new THREE.MeshStandardMaterial({ color: 0xef4444, emissive: 0x7f1d1d, emissiveIntensity: 0.5 });
+
+function blockSize(m) { return clamp(0.34 + 0.5 * Math.cbrt(m / 2), 0.34, 1.05); }
+
+function makeBlock(m, color) {
+  const s = blockSize(m);
+  const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.5, metalness: 0.08 });
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(s, s, 0.8), mat);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  const edges = new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry), matBlockLines);
+  mesh.add(edges);
+  return { mesh, s };
+}
+
+function makeSlab(len, w, h, y) {
+  const slab = new THREE.Mesh(new THREE.BoxGeometry(len, h, w), matSlab);
+  slab.position.y = y;
+  slab.receiveShadow = true;
+  return slab;
+}
+
+/* 螺旋弹簧（沿 x 轴，中心在原点） */
+class HelixCurve extends THREE.Curve {
+  constructor(len, coils, radius) { super(); this.len = len; this.coils = coils; this.radius = radius; }
+  getPoint(t, target) {
+    target = target || new THREE.Vector3();
+    const ang = t * this.coils * Math.PI * 2;
+    return target.set(t * this.len - this.len / 2, Math.cos(ang) * this.radius, Math.sin(ang) * this.radius);
+  }
+}
+function makeSpringMesh(len, coils, radius) {
+  return new THREE.Mesh(new THREE.TubeGeometry(new HelixCurve(len, coils, radius), 110, 0.045, 8, false), matSpring);
+}
+
+/* 标注精灵（文字 + 值） */
+const labelTexCache = new Map();
+function getLabelTexture(text) {
+  let tex = labelTexCache.get(text);
+  if (tex) return tex;
+  const h = 96, w = Math.max(180, text.length * 30 + 52);
+  const cv = document.createElement('canvas');
+  cv.width = w; cv.height = h;
+  const c = cv.getContext('2d');
+  c.fillStyle = 'rgba(2,6,23,0.78)';
+  if (c.roundRect) {
+    c.beginPath();
+    c.roundRect(2, 2, w - 4, h - 4, 14);
+    c.fill();
+  } else {
+    c.fillRect(2, 2, w - 4, h - 4);
+  }
+  c.fillStyle = '#f8fafc';
+  c.font = 'bold 42px "Segoe UI","Microsoft YaHei",sans-serif';
+  c.textAlign = 'center'; c.textBaseline = 'middle';
+  c.fillText(text, w / 2, h / 2 + 2);
+  tex = new THREE.CanvasTexture(cv);
+  labelTexCache.set(text, tex);
+  return tex;
+}
+
+/* 箭头池（复用，避免每帧重建几何体） */
+const arrowPool = [];
+function placeArrow(i, origin, dir, mag, color) {
+  const len = clamp(mag * 0.085, 0.22, 3.4);
+  let a = arrowPool[i];
+  if (!a) {
+    a = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), origin, len, color, 0.22, 0.12);
+    arrowPool[i] = a;
+    ARROWS.add(a);
+  }
+  a.position.copy(origin);
+  a.setDirection(dir);
+  a.setLength(len, 0.22, 0.12);
+  a.setColor(color);
+  a.visible = true;
+  return a;
+}
+const labelPool = [];
+function placeLabel(i, text, pos) {
+  let s = labelPool[i];
+  if (!s) {
+    s = new THREE.Sprite(new THREE.SpriteMaterial({ depthTest: false, transparent: true }));
+    s.renderOrder = 999;
+    labelPool[i] = s;
+    LABELS.add(s);
+  }
+  s.material.map = getLabelTexture(text);
+  s.material.needsUpdate = true;
+  const h = 96, w = Math.max(180, text.length * 30 + 52);
+  s.scale.set(w / h * 0.34, 0.34, 1);
+  s.position.copy(pos);
+  s.visible = true;
+  return s;
+}
+function clearPools(count) {
+  for (let i = count; i < arrowPool.length; i++) arrowPool[i].visible = false;
+  for (let i = count; i < labelPool.length; i++) labelPool[i].visible = false;
+}
+function showForces() { return $('chkForces').checked; }
+function showLabels() { return $('chkLabels').checked; }
+function showVel() { return $('chkVel').checked; }
+
+/* 虚线（用于重力分解示意） */
+function makeDashedLine(color) {
+  const mat = new THREE.LineDashedMaterial({ color, dashSize: 0.1, gapSize: 0.07, transparent: true, opacity: 0.9 });
+  const line = new THREE.Line(new THREE.BufferGeometry(), mat);
+  line.visible = false;
+  return line;
+}
+function setDashedLine(line, p1, p2) {
+  line.geometry.setFromPoints([p1.clone(), p2.clone()]);
+  line.computeLineDistances();
+}
+
+/* ---------------- 模拟状态 ---------------- */
+const sim = { t: 0, running: false, timeScale: 1, follow: new THREE.Vector3(2, 1, 0) };
+let active = null;   // 当前模型对象
+
+/* ---------------- 图表 ---------------- */
+const graph = {
+  series: [],      // {k, label, color, dash}
+  data: [],        // {t, vals:{k:number}}
+  tMax: 10,
+  setSeries(series) { this.series = series; this.data = []; },
+  push(t, vals) {
+    this.data.push({ t, vals });
+    while (this.data.length > 1 && this.data[0].t < t - 30) this.data.shift();
+  },
+  clear() { this.data = []; },
+  draw() {
+    const cv = $('graph');
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = cv.clientWidth, h = cv.clientHeight;
+    if (w < 10) return;
+    const W = Math.round(w * dpr), H = Math.round(h * dpr);
+    if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+    const c = cv.getContext('2d');
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    c.clearRect(0, 0, w, h);
+
+    const mL = 56, mR = 14, mT = 10, mB = 24;
+    const pw = w - mL - mR, ph = h - mT - mB;
+    if (pw <= 10 || ph <= 10) return;
+    const tMin = Math.max(0, sim.t - this.tMax);
+    const tMax = Math.max(tMin + this.tMax, 2);
+
+    // 数据范围
+    let yMin = Infinity, yMax = -Infinity;
+    for (const d of this.data) {
+      if (d.t < tMin) continue;
+      for (const s of this.series) {
+        const v = d.vals[s.k];
+        if (v === undefined) continue;
+        if (v < yMin) yMin = v;
+        if (v > yMax) yMax = v;
+      }
+    }
+    if (!isFinite(yMin)) { yMin = -1; yMax = 1; }
+    if (Math.abs(yMax - yMin) < 1e-9) { yMax = yMin + 1; }
+    let pad = (yMax - yMin) * 0.12;
+    yMin -= pad; yMax += pad;
+
+    const X = t => mL + (t - tMin) / (tMax - tMin) * pw;
+    const Y = v => mT + (yMax - v) / (yMax - yMin) * ph;
+
+    // 网格 + 刻度
+    c.font = '11px "Segoe UI","Microsoft YaHei",sans-serif';
+    c.strokeStyle = '#e2e8f0'; c.fillStyle = '#64748b'; c.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+      const t = tMin + (tMax - tMin) * i / 4;
+      c.beginPath(); c.moveTo(X(t), mT); c.lineTo(X(t), mT + ph); c.stroke();
+      c.textAlign = 'center'; c.fillText(t.toFixed(1) + 's', X(t), h - 8);
+    }
+    c.textAlign = 'right';
+    for (let i = 0; i <= 4; i++) {
+      const v = yMin + (yMax - yMin) * i / 4;
+      c.beginPath(); c.moveTo(mL, Y(v)); c.lineTo(w - mR, Y(v)); c.stroke();
+      c.fillText(v.toPrecision(3), mL - 6, Y(v) + 4);
+    }
+    // 零线
+    if (yMin < 0 && yMax > 0) {
+      c.strokeStyle = '#94a3b8';
+      c.beginPath(); c.moveTo(mL, Y(0)); c.lineTo(w - mR, Y(0)); c.stroke();
+    }
+    // 边框
+    c.strokeStyle = '#cbd5e1';
+    c.strokeRect(mL, mT, pw, ph);
+
+    // 曲线
+    for (const s of this.series) {
+      c.strokeStyle = s.color;
+      c.lineWidth = 2;
+      if (s.dash) c.setLineDash([6, 4]);
+      c.beginPath();
+      let started = false;
+      for (const d of this.data) {
+        if (d.t < tMin) continue;
+        const v = d.vals[s.k];
+        if (v === undefined) continue;
+        const x = X(d.t), y = Y(v);
+        if (!started) { c.moveTo(x, y); started = true; } else c.lineTo(x, y);
+      }
+      c.stroke();
+      c.setLineDash([]);
+    }
+    this.drawLegend();
+  },
+  drawLegend() {
+    let html = '';
+    for (const s of this.series) {
+      const last = this.data.length ? this.data[this.data.length - 1].vals[s.k] : undefined;
+      const val = last === undefined ? '—' : fmt(last);
+      html += '<span class="lg"><span class="sw" style="background:' + s.color + '"></span>' + s.label + ' = <b>' + val + '</b></span>';
+    }
+    $('graphlegend').innerHTML = html;
+  }
+};
+
+/* ---------------- 通用 UI 绑定 ---------------- */
+function bind(id, onchange) {
+  const r = $(id), n = $(id + '-num');
+  const v = $('#' + id + '-v');
+  const set = (val) => {
+    r.value = val; n.value = fmt(val, 3);
+    if (v) v.textContent = fmt(val) ;
+  };
+  r.addEventListener('input', () => { n.value = r.value; if (v) v.textContent = fmt(parseFloat(r.value)); onchange(parseFloat(r.value)); });
+  n.addEventListener('input', () => {
+    let val = parseFloat(n.value);
+    if (isNaN(val)) return;
+    val = clamp(val, parseFloat(r.min), parseFloat(r.max));
+    r.value = val;
+    if (v) v.textContent = fmt(val);
+    onchange(val);
+  });
+  set(parseFloat(r.value));
+  return () => parseFloat(r.value);
+}
+function val(id) { return parseFloat($(id).value); }
+
+/* 右侧面板渲染 */
+function renderForces(list) {
+  let html = '';
+  for (const f of list) {
+    html += '<div class="fline"><span class="dot" style="background:' + f.color + '"></span>' + f.name +
+      '<span style="color:#64748b">' + f.dir + '</span><b>' + f.val + '</b></div>';
+  }
+  $('faForces').innerHTML = html;
+}
+function renderEqns(list) {
+  $('faEqns').innerHTML = list.map(e => '<div class="eqbox">' + e + '</div>').join('');
+}
+function renderStatus(html, cls) {
+  const el = $('faStatus');
+  el.innerHTML = html;
+  el.className = 'status-box';
+}
+function renderEnergy(bars, total) {
+  if (!bars) { $('faEnergy').innerHTML = ''; return; }
+  const max = Math.max(total, 1e-9);
+  let html = '<div class="panel-h">⚡ 能量（机械能守恒验证）</div>';
+  for (const b of bars) {
+    const frac = clamp(b.val / max * 100, 0, 100);
+    html += '<div class="ebar"><div class="lbl"><span>' + b.label + '</span><b>' + b.val + '</b></div>' +
+      '<div class="trk"><div class="fill" style="width:' + frac.toFixed(1) + '%;background:' + b.color + '"></div></div></div>';
+  }
+  html += '<div class="eqbox">E总 = ' + bars.map(b => b.val).join(' + ') + ' = <b>' + total + ' J</b>' + (bars.note ? ' <span style="color:#16a34a">' + bars.note + '</span>' : '') + '</div>';
+  $('faEnergy').innerHTML = html;
+}
+
+/* ---------------- 2D 示意图绘制工具 ---------------- */
+let faCtx = null;
+function fitFACanvas() {
+  const cv = $('faCanvas');
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const w = cv.clientWidth, h = cv.clientHeight;
+  if (w < 10) return null;
+  const W = Math.round(w * dpr), H = Math.round(h * dpr);
+  if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+  const c = cv.getContext('2d');
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  c.clearRect(0, 0, w, h);
+  return { c, w, h };
+}
+function arrow2D(c, x, y, dx, dy, color, label, dash) {
+  const len = Math.hypot(dx, dy);
+  if (len < 2) return [x + dx, y + dy];
+  c.strokeStyle = color; c.fillStyle = color; c.lineWidth = 2.4;
+  if (dash) c.setLineDash([6, 4]);
+  c.beginPath(); c.moveTo(x, y); c.lineTo(x + dx, y + dy); c.stroke();
+  c.setLineDash([]);
+  const ang = Math.atan2(dy, dx);
+  const hs = Math.min(11, len / 2.5);
+  c.beginPath();
+  c.moveTo(x + dx, y + dy);
+  c.lineTo(x + dx - hs * Math.cos(ang - 0.42), y + dy - hs * Math.sin(ang - 0.42));
+  c.lineTo(x + dx - hs * Math.cos(ang + 0.42), y + dy - hs * Math.sin(ang + 0.42));
+  c.closePath(); c.fill();
+  if (label) {
+    const tx = x + dx * 0.52 + 10, ty = y + dy * 0.52 - 10;
+    c.font = 'bold 12.5px "Segoe UI","Microsoft YaHei",sans-serif';
+    c.fillStyle = color; c.textAlign = 'left';
+    c.fillText(label, tx, ty);
+  }
+  return [x + dx, y + dy];
+}
+function rect2D(c, cx, cy, w, h, rot, fill, stroke) {
+  c.save();
+  c.translate(cx, cy);
+  if (rot) c.rotate(rot);
+  c.fillStyle = fill; c.strokeStyle = stroke || '#0f172a'; c.lineWidth = 1.6;
+  c.fillRect(-w / 2, -h / 2, w, h);
+  c.strokeRect(-w / 2, -h / 2, w, h);
+  c.restore();
+}
+
+/* ============================================================
+   模型一：滑块模型（水平面）
+   ============================================================ */
+function makeSliderModel() {
+  const S = { x: 2, v: 0, a: 0, f: 0, static: false };
+  let block, runway, flagA, flagB;
+  const grp = new THREE.Group();
+
+  function readParams() {
+    return { m: val('slider-m'), mu: val('slider-mu'), v0: val('slider-v0'), F: val('slider-F'), L: val('slider-L'), x0: val('slider-x0') };
+  }
+  function reset() {
+    const p = readParams();
+    S.x = clamp(p.x0, blockSize(p.m) / 2 + 0.05, p.L - blockSize(p.m) / 2 - 0.05);
+    S.v = p.v0; S.a = 0; S.f = 0; S.static = false;
+    sim.t = 0;
+  }
+  function build() {
+    const p = readParams();
+    // 跑道
+    runway = makeSlab(p.L + 1, 1.7, 0.1, 0.05);
+    runway.position.x = p.L / 2;
+    grp.add(runway);
+    flagA = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.9, 0.12), matFlagG);
+    flagA.position.set(0, 0.45, 1.0); grp.add(flagA);
+    flagB = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.9, 0.12), matFlagR);
+    flagB.position.set(p.L, 0.45, 1.0); grp.add(flagB);
+    block = makeBlock(p.m, 0x38bdf8);
+    grp.add(block.mesh);
+    scene.add(grp);
+    reset();
+  }
+  function step(h) {
+    const p = readParams();
+    const fmax = p.mu * p.m * G;
+    if (Math.abs(S.v) < 1e-9 && Math.abs(p.F) <= fmax + 1e-9) {
+      S.static = true; S.f = -p.F; S.a = 0;
+    } else {
+      S.static = false;
+      S.f = Math.abs(S.v) < 1e-9 ? -Math.sign(p.F) * fmax : -Math.sign(S.v) * fmax;
+      S.a = (p.F + S.f) / p.m;
+      S.v += S.a * h;
+    }
+    S.x += S.v * h;
+    const half = block.s / 2;
+    if (S.x < half) { S.x = half; if (S.v < 0) S.v = 0; }
+    if (S.x > p.L - half) { S.x = p.L - half; if (S.v > 0) S.v = 0; }
+  }
+  function sync() {
+    const p = readParams();
+    if (Math.abs(blockSize(p.m) - block.s) > 1e-4) {
+      grp.remove(block.mesh);
+      block = makeBlock(p.m, 0x38bdf8);
+      grp.add(block.mesh);
+    }
+    block.mesh.position.set(S.x, 0.07 + block.s / 2, 0);
+    sim.follow.set(S.x, 1.1, 0);
+
+    let n = 0;
+    const o = block.mesh.position.clone();
+    const btm = o.clone(); btm.y -= block.s / 2;                  // 接触面（底面）
+    const face = o.clone(); face.x -= Math.sign(p.F || 1) * block.s / 2;  // 外力作用面
+    const mg = p.m * G, N = p.m * G;
+    if (showForces()) {
+      placeArrow(n++, o, new THREE.Vector3(0, -1, 0), mg, COL.gravity);
+      placeArrow(n++, btm, new THREE.Vector3(0, 1, 0), N, COL.normal);
+      if (Math.abs(p.F) > 1e-9)
+        placeArrow(n++, face, new THREE.Vector3(Math.sign(p.F), 0, 0), Math.abs(p.F), COL.applied);
+      if (Math.abs(S.f) > 1e-6)
+        placeArrow(n++, btm, new THREE.Vector3(Math.sign(S.f), 0, 0), Math.abs(S.f), COL.friction);
+      if (showVel() && Math.abs(S.v) > 1e-9)
+        placeArrow(n++, o, new THREE.Vector3(Math.sign(S.v), 0, 0), Math.abs(S.v) * 0.9, COL.velocity);
+    }
+    clearPools(n);
+    if (showLabels()) {
+      let i = 0;
+      placeLabel(i++, 'mg = ' + fmt(mg) + ' N', o.clone().add(new THREE.Vector3(0, -0.9, 0)));
+      placeLabel(i++, 'N = ' + fmt(N) + ' N', o.clone().add(new THREE.Vector3(0, 1.1, 0)));
+      if (Math.abs(p.F) > 1e-9)
+        placeLabel(i++, 'F = ' + fmt(p.F) + ' N', o.clone().add(new THREE.Vector3(Math.sign(p.F) * 1.6, 0.4, 0)));
+      if (Math.abs(S.f) > 1e-6)
+        placeLabel(i++, 'f = ' + fmt(Math.abs(S.f)) + ' N', o.clone().add(new THREE.Vector3(-Math.sign(S.f) * 1.6, -0.5, 0)));
+      if (showVel() && Math.abs(S.v) > 1e-9)
+        placeLabel(i++, 'v = ' + fmt(S.v) + ' m/s', o.clone().add(new THREE.Vector3(Math.sign(S.v) * 1.8, 1.5, 0)));
+      clearPoolsL(i);
+    }
+    updateRunwayGeom();
+  }
+  function updateRunwayGeom() {
+    const p = readParams();
+    if (runway.geometry.parameters.width !== p.L + 1) {
+      runway.geometry.dispose();
+      runway.geometry = new THREE.BoxGeometry(p.L + 1, 0.1, 1.7);
+      runway.position.x = p.L / 2;
+      flagB.position.x = p.L;
+    }
+  }
+  function clearPoolsL(n) { for (let i = n; i < labelPool.length; i++) labelPool[i].visible = false; }
+  function plotValues() { return { x: S.x, v: S.v }; }
+  function forces() {
+    const p = readParams();
+    const mg = p.m * G;
+    const list = [
+      { name: '重力 G', color: CSS.gravity, dir: '竖直向下', val: fmt(mg) + ' N' },
+      { name: '支持力 N', color: CSS.normal, dir: '竖直向上', val: fmt(mg) + ' N' }
+    ];
+    if (Math.abs(p.F) > 1e-9) list.push({ name: '外力 F', color: CSS.applied, dir: p.F > 0 ? '水平向右' : '水平向左', val: fmt(Math.abs(p.F)) + ' N' });
+    if (Math.abs(S.f) > 1e-6) list.push({ name: S.static ? '静摩擦力 f' : '滑动摩擦力 f', color: CSS.friction, dir: S.f > 0 ? '水平向右' : '水平向左', val: fmt(Math.abs(S.f)) + ' N' });
+    return list;
+  }
+  function eqns() {
+    const p = readParams();
+    if (S.static) return [
+      '最大静摩擦力 f_max = μmg = ' + fmt(p.mu * p.m * G) + ' N ≥ F = ' + fmt(Math.abs(p.F)) + ' N',
+      '静摩擦力 f = F = ' + fmt(Math.abs(S.f)) + ' N（二力平衡，a = 0）'
+    ];
+    return [
+      '滑动摩擦力 f = μmg = ' + fmt(p.mu * p.m * G) + ' N（方向与运动相反）',
+      'F合 = F + f = ' + fmt(p.F) + ' + (' + fmt(S.f) + ') = ' + fmt(p.F + S.f) + ' N',
+      'a = F合 / m = ' + fmt(S.a) + ' m/s²'
+    ];
+  }
+  function statusHTML() {
+    const p = readParams();
+    if (S.static) return '🚫 系统<b>静止</b>：静摩擦力与外力的合力平衡（f = ' + fmt(Math.abs(S.f)) + ' N），a = 0。<br>临界判断：μmg = ' + fmt(p.mu * p.m * G) + ' N ' + (Math.abs(p.F) <= p.mu * p.m * G ? '≥' : '<') + ' |F|，物体' + (Math.abs(p.F) <= p.mu * p.m * G ? '保持静止' : '即将运动') + '。';
+    if (Math.abs(S.a) < 1e-9) return '➡️ 合力为零，物体做<b>匀速直线运动</b>（v = ' + fmt(S.v) + ' m/s）。';
+    return S.a > 0 ? '🚀 物体<b>匀加速</b>运动，a = ' + fmt(S.a) + ' m/s²。' : '🛑 物体<b>匀减速</b>运动，a = ' + fmt(S.a) + ' m/s²。';
+  }
+  function updateUI() {
+    const p = readParams();
+    $('readouts').innerHTML =
+      '<span class="chip">t = <b>' + fmt(sim.t) + ' s</b></span>' +
+      '<span class="chip">x = <b>' + fmt(S.x) + ' m</b></span>' +
+      '<span class="chip" style="color:#60a5fa">v = <b>' + fmt(S.v) + ' m/s</b></span>' +
+      '<span class="chip" style="color:#34d399">a = <b>' + fmt(S.a) + ' m/s²</b></span>' +
+      '<span class="chip" style="color:#f87171">f = <b>' + fmt(Math.abs(S.f)) + ' N</b></span>';
+    $('statusbar').textContent = S.static ? '静止：静摩擦力平衡外力（f = ' + fmt(Math.abs(S.f)) + ' N）' :
+      '运动：a = ' + fmt(S.a) + ' m/s²，v = ' + fmt(S.v) + ' m/s';
+    renderForces(forces());
+    renderEqns(eqns());
+    renderEnergy(null);
+    renderStatus(statusHTML());
+    drawSchematic();
+  }
+  function drawSchematic() {
+    const fit = fitFACanvas(); if (!fit) return;
+    const { c, w, h } = fit;
+    const p = readParams();
+    // 地面
+    c.strokeStyle = '#94a3b8'; c.lineWidth = 2;
+    c.beginPath(); c.moveTo(30, 195); c.lineTo(w - 30, 195); c.stroke();
+    c.fillStyle = '#64748b'; c.font = '11px sans-serif'; c.textAlign = 'left';
+    c.fillText('地面', w - 60, 213);
+    const bx = w / 2, by = 160, bw = 130, bh = 46;
+    rect2D(c, bx, by, bw, bh, 0, '#e0f2fe', '#0284c7');
+    c.fillStyle = '#0284c7'; c.font = 'bold 12px sans-serif'; c.textAlign = 'center';
+    c.fillText('m = ' + fmt(p.m) + ' kg', bx, by + 4);
+    const mg = p.m * G;
+    const maxF = Math.max(mg, Math.abs(p.F), Math.abs(S.f), 1);
+    const sc = v => clamp(28 + 40 * Math.abs(v) / maxF, 14, 58);
+    const cx = bx, cy = by;
+    // 箭头（比例长度）
+    let yb = cy;
+    arrow2D(c, cx, yb, 0, sc(mg), CSS.gravity, 'mg = ' + fmt(mg) + ' N');
+    arrow2D(c, cx, yb, 0, -sc(mg), CSS.normal, 'N = ' + fmt(mg) + ' N');
+    if (Math.abs(p.F) > 1e-9) arrow2D(c, cx - bw / 2, yb, sc(p.F) * Math.sign(p.F), 0, CSS.applied, 'F = ' + fmt(p.F) + ' N');
+    if (Math.abs(S.f) > 1e-6) arrow2D(c, cx, by + bh / 2, Math.sign(S.f) * sc(S.f), 0, CSS.friction, 'f = ' + fmt(Math.abs(S.f)) + ' N');
+    if (showVel() && Math.abs(S.v) > 1e-9) arrow2D(c, cx, by - bh / 2, sc(S.v) * Math.sign(S.v) * 0.4, 0, CSS.velocity, 'v', false);
+    c.fillStyle = '#0f172a'; c.textAlign = 'left'; c.font = 'bold 12px sans-serif';
+    c.fillText('受力分析 · 水平面', 30, 24);
+  }
+  function dispose() { scene.remove(grp); }
+  return {
+    id: 'slider',
+    series: [
+      { k: 'x', label: '位移 x / m', color: '#f87171' },
+      { k: 'v', label: '速度 v / (m·s⁻¹)', color: '#60a5fa' }
+    ],
+    knowledge: '<ul><li>牛顿第二定律：F合 = ma；合力方向即加速度方向。</li><li>滑动摩擦力 f = μN = μmg，方向与<b>相对运动方向</b>相反。</li><li>静摩擦力是被动力：f ≤ μsN，与外力平衡。</li><li>刹车问题：x = v₀²/(2μg)（初速 v₀、μ 的匀减速）。</li><li>图像：v-t 图像斜率 = a，面积 = 位移。</li></ul>',
+    build, reset, step, sync, plotValues, updateUI, dispose,
+    cam: { pos: [9, 6, 12], target: [3, 1, 0] }
+  };
+}
+
+/* ============================================================
+   模型二：斜面模型（角度可调）
+   ============================================================ */
+function makeInclineModel() {
+  const S = { s: 8, v: 0, a: 0, f: 0, static: false };
+  let block, wedge, angleArc, angleRef, angleSprite;
+  const grp = new THREE.Group();
+
+  function readParams() {
+    return { th: val('incline-th') * RAD, thd: val('incline-th'), m: val('incline-m'), mu: val('incline-mu'), v0: val('incline-v0'), s0: val('incline-s0'), L: val('incline-L') };
+  }
+  function wedgeGeom(p) {
+    const Lx = p.L * Math.cos(p.th), Hy = p.L * Math.sin(p.th);
+    const shape = new THREE.Shape();
+    shape.moveTo(0, 0); shape.lineTo(Lx, 0); shape.lineTo(Lx, Hy); shape.closePath();
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: 2.4, bevelEnabled: false });
+    geo.translate(0, 0, -1.2);
+    return geo;
+  }
+  function rebuildWedge(p) {
+    if (wedge) { grp.remove(wedge); wedge.geometry.dispose(); }
+    wedge = new THREE.Mesh(wedgeGeom(p), matWedge);
+    wedge.castShadow = true; wedge.receiveShadow = true;
+    wedge.position.y = 0.02;
+    grp.add(wedge);
+    // 角度指示：实心扇形弧（醒目）+ 水平参考线 + 大号标签
+    if (angleArc) { grp.remove(angleArc); angleArc.geometry.dispose(); }
+    const ringGeo = new THREE.RingGeometry(1.85, 2.1, 48, 1, 0, Math.max(p.th, 0.03));
+    angleArc = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: 0xfbbf24, side: THREE.DoubleSide, transparent: true, opacity: 0.92 }));
+    angleArc.position.set(0, 0.05, 1.28);
+    grp.add(angleArc);
+    if (angleRef) { grp.remove(angleRef); angleRef.geometry.dispose(); }
+    angleRef = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.05, 0.05), new THREE.MeshBasicMaterial({ color: 0xfde68a }));
+    angleRef.position.set(1.3, 0.05, 1.28);
+    grp.add(angleRef);
+    if (angleSprite) { grp.remove(angleSprite); }
+    const tex = getLabelTexture('θ = ' + fmt(p.thd, 1) + '°');
+    angleSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true }));
+    angleSprite.scale.set(2.3, 0.62, 1);
+    angleSprite.position.set(Math.cos(p.th / 2) * 3.15, 0.05 + Math.sin(p.th / 2) * 3.15, 1.3);
+    grp.add(angleSprite);
+  }
+  function reset() {
+    const p = readParams();
+    S.s = clamp(p.s0, blockSize(p.m) / 2 + 0.05, p.L - blockSize(p.m) / 2 - 0.05);
+    S.v = p.v0; S.a = 0; S.f = 0; S.static = false;
+    sim.t = 0;
+  }
+  function build() {
+    const p = readParams();
+    rebuildWedge(p);
+    block = makeBlock(p.m, 0xfb923c);
+    grp.add(block.mesh);
+    scene.add(grp);
+    reset();
+  }
+  function blockCenter(p) {
+    const b = block.s / 2;
+    const nx = -Math.sin(p.th), ny = Math.cos(p.th);
+    return new THREE.Vector3(S.s * Math.cos(p.th) + nx * (b + 0.01), 0.02 + S.s * Math.sin(p.th) + ny * (b + 0.01), 0);
+  }
+  function step(h) {
+    const p = readParams();
+    const gx = G * Math.sin(p.th), gy = G * Math.cos(p.th);
+    const fmax = p.mu * p.m * G * Math.cos(p.th);
+    if (Math.abs(S.v) < 1e-9 && gx <= fmax + 1e-3) {
+      S.static = true; S.f = gx * p.m; S.a = 0;
+    } else {
+      S.static = false;
+      S.f = Math.abs(S.v) < 1e-9 ? fmax : -Math.sign(S.v) * fmax;   // 沿面向上为正
+      S.a = (-p.m * gx + S.f) / p.m;
+      S.v += S.a * h;
+    }
+    S.s += S.v * h;
+    const half = block.s / 2;
+    if (S.s < half) { S.s = half; if (S.v < 0) S.v = 0; }
+    if (S.s > p.L - half) { S.s = p.L - half; if (S.v > 0) S.v = 0; }
+  }
+  let dmgSin, dmgCos, dmgLine;
+  function sync() {
+    const p = readParams();
+    const o = blockCenter(p);
+    block.mesh.position.copy(o);
+    block.mesh.rotation.z = p.th;   // +θ：物块底面与斜面平行，紧贴斜面（右升斜面）
+    // 镜头跟随斜面中点：楔块、角度指示、物块全部在画面内
+    sim.follow.set(p.L * Math.cos(p.th) / 2, 0.02 + p.L * Math.sin(p.th) / 2, 0);
+
+    const ux = Math.cos(p.th), uy = Math.sin(p.th);       // 沿面向上
+    const nx = -Math.sin(p.th), ny = Math.cos(p.th);      // 垂直向外
+    const b = block.s / 2;
+    const oc = o.clone().sub(new THREE.Vector3(nx * b, ny * b, 0));   // 接触点（物块底面中心）
+    const mg = p.m * G, gx = mg * Math.sin(p.th), gy = mg * Math.cos(p.th);
+
+    let n = 0;
+    if (showForces()) {
+      placeArrow(n++, o, new THREE.Vector3(0, -1, 0), mg, COL.gravity);
+      placeArrow(n++, oc, new THREE.Vector3(nx, ny, 0), gy, COL.normal);
+      if (Math.abs(S.f) > 1e-6) placeArrow(n++, oc, new THREE.Vector3(Math.sign(S.f) * ux, Math.sign(S.f) * uy, 0), Math.abs(S.f), COL.friction);
+      if (showVel() && Math.abs(S.v) > 1e-9) placeArrow(n++, o, new THREE.Vector3(Math.sign(S.v) * ux, Math.sign(S.v) * uy, 0), Math.abs(S.v) * 0.9, COL.velocity);
+      if ($('faDecomp').checked) {
+        // 重力分解（虚线）
+        if (!dmgSin) { dmgSin = makeDashedLine(COL.comp); scene.add(dmgSin); }
+        if (!dmgCos) { dmgCos = makeDashedLine(COL.comp); scene.add(dmgCos); }
+        if (!dmgLine) { dmgLine = makeDashedLine(COL.comp); scene.add(dmgLine); }
+        const a1 = o.clone().add(new THREE.Vector3(-ux, -uy, 0).multiplyScalar(gx * 0.085));
+        const a2 = o.clone().add(new THREE.Vector3(-nx, -ny, 0).multiplyScalar(gy * 0.085));
+        setDashedLine(dmgSin, o, a1); dmgSin.visible = true;
+        setDashedLine(dmgCos, o, a2); dmgCos.visible = true;
+        setDashedLine(dmgLine, a1, a2); dmgLine.visible = true;
+      } else if (dmgSin) { dmgSin.visible = dmgCos.visible = dmgLine.visible = false; }
+    } else if (dmgSin) { dmgSin.visible = dmgCos.visible = dmgLine.visible = false; }
+    clearPools(n);
+
+    if (showLabels()) {
+      let i = 0;
+      placeLabel(i++, 'mg = ' + fmt(mg) + ' N', o.clone().add(new THREE.Vector3(-0.5, -1.2, 0)));
+      placeLabel(i++, 'N = mgcosθ = ' + fmt(gy) + ' N', oc.clone().add(new THREE.Vector3(nx * 1.5, ny * 1.5, 0)));
+      if (Math.abs(S.f) > 1e-6)
+        placeLabel(i++, 'f = ' + fmt(Math.abs(S.f)) + ' N', oc.clone().add(new THREE.Vector3(Math.sign(S.f) * ux * 1.8, Math.sign(S.f) * uy * 1.8 - 0.4, 0)));
+      if ($('faDecomp').checked) {
+        placeLabel(i++, 'mgsinθ = ' + fmt(gx) + ' N', o.clone().add(new THREE.Vector3(-ux * 1.9, -uy * 1.9, 0)));
+        placeLabel(i++, 'mgcosθ = ' + fmt(gy) + ' N', o.clone().add(new THREE.Vector3(-nx * 1.9, -ny * 1.9, 0)));
+      }
+      if (showVel() && Math.abs(S.v) > 1e-9)
+        placeLabel(i++, 'v = ' + fmt(S.v) + ' m/s', o.clone().add(new THREE.Vector3(Math.sign(S.v) * ux * 2.0, Math.sign(S.v) * uy * 2.0 + 0.5, 0)));
+      for (let j = i; j < labelPool.length; j++) labelPool[j].visible = false;
+    }
+  }
+  function plotValues() { return { x: S.s, v: S.v }; }
+  function forces() {
+    const p = readParams();
+    const mg = p.m * G, gx = mg * Math.sin(p.th), gy = mg * Math.cos(p.th);
+    const list = [
+      { name: '重力 G', color: CSS.gravity, dir: '竖直向下', val: fmt(mg) + ' N' },
+      { name: 'G∥ = mg sinθ（分量）', color: CSS.comp, dir: '沿斜面向下', val: fmt(gx) + ' N' },
+      { name: 'G⊥ = mg cosθ（分量）', color: CSS.comp, dir: '垂直斜面', val: fmt(gy) + ' N' },
+      { name: '支持力 N', color: CSS.normal, dir: '垂直斜面向上', val: fmt(gy) + ' N' }
+    ];
+    if (Math.abs(S.f) > 1e-6) list.push({ name: S.static ? '静摩擦力 f' : '滑动摩擦力 f', color: CSS.friction, dir: S.f > 0 ? '沿斜面向上' : '沿斜面向下', val: fmt(Math.abs(S.f)) + ' N' });
+    return list;
+  }
+  function eqns() {
+    const p = readParams();
+    const gx = G * Math.sin(p.th), gy = G * Math.cos(p.th);
+    const arr = [
+      '垂直斜面：N = mg cosθ = ' + fmt(p.m * gy) + ' N',
+      '重力沿斜面分量：mg sinθ = ' + fmt(p.m * gx) + ' N'
+    ];
+    if (S.static) arr.push('mg sinθ ≤ μmg cosθ 且 v = 0 → 静止：f = mg sinθ = ' + fmt(Math.abs(S.f)) + ' N');
+    else if (S.v < 0) arr.push('沿斜面（下滑）：mg sinθ − f = m(−a) → a = ' + fmt(S.a) + ' m/s²');
+    else arr.push('沿斜面（上滑）：−mg sinθ − f = ma → a = ' + fmt(S.a) + ' m/s²');
+    return arr;
+  }
+  function statusHTML() {
+    const p = readParams();
+    const tan = Math.tan(p.th);
+    if (S.static)
+      return '🛑 物体<b>静止</b>在斜面上。<br>临界判断：tanθ = ' + fmt(tan) + (tan <= p.mu ? ' ≤ ' : ' > ') + ' μ = ' + fmt(p.mu) + '，' + (tan <= p.mu ? '满足自锁条件（μ ≥ tanθ），静止。' : '（μ < tanθ，即将下滑——点击播放观察）') + '<br>临界角：θ₀ = arctan(μ) = ' + fmt(Math.atan(p.mu) / RAD, 1) + '°';
+    const up = S.v > 0;
+    if (up) return '⬆️ 物体沿斜面<b>上滑</b>：重力分量与摩擦力同向阻碍运动，a = ' + fmt(S.a) + ' m/s²（减速，之后会下滑返回）。';
+    return '⬇️ 物体沿斜面<b>下滑</b>，a = g(sinθ − μcosθ) = ' + fmt(S.a) + ' m/s²。';
+  }
+  function updateUI() {
+    const p = readParams();
+    const tan = Math.tan(p.th);
+    $('incline-theta-big').textContent = fmt(p.thd, 1) + '°';
+    $('incline-theta-note').textContent = 'tanθ = ' + fmt(tan) + '　vs　μ = ' + fmt(p.mu) + (tan > p.mu ? '（tanθ > μ：加速下滑）' : '（tanθ ≤ μ：可静止/匀速）');
+    $('angleBadge').innerHTML = 'θ = <b>' + fmt(p.thd, 1) + '°</b><span>tanθ = ' + fmt(tan) + ' · μ = ' + fmt(p.mu) + (tan > p.mu ? '（加速下滑）' : '（可静止）') + '</span>';
+    $('readouts').innerHTML =
+      '<span class="chip">t = <b>' + fmt(sim.t) + ' s</b></span>' +
+      '<span class="chip">θ = <b>' + fmt(p.thd, 1) + '°</b></span>' +
+      '<span class="chip">s = <b>' + fmt(S.s) + ' m</b></span>' +
+      '<span class="chip" style="color:#60a5fa">v = <b>' + fmt(S.v) + ' m/s</b></span>' +
+      '<span class="chip" style="color:#34d399">a = <b>' + fmt(S.a) + ' m/s²</b></span>';
+    $('statusbar').textContent = S.static ? '静止于斜面（mg sinθ = ' + fmt(p.m * G * Math.sin(p.th)) + ' N ≤ μmg cosθ）' :
+      (S.v > 0 ? '沿斜面上滑：a = ' + fmt(S.a) + ' m/s²' : '沿斜面下滑：a = ' + fmt(S.a) + ' m/s²');
+    renderForces(forces());
+    renderEqns(eqns());
+    renderEnergy(null);
+    renderStatus(statusHTML());
+    drawSchematic();
+  }
+  function drawSchematic() {
+    const fit = fitFACanvas(); if (!fit) return;
+    const { c, w, h } = fit;
+    const p = readParams();
+    const viewTh = p.th;   // 使用真实倾角绘制（与 3D 完全一致）
+    const x0 = 40, y0 = 205, Slen = w - 150;
+    const x2 = x0 + Slen * Math.cos(viewTh), y2 = y0 - Slen * Math.sin(viewTh);
+    // 地面 + 斜面
+    c.strokeStyle = '#94a3b8'; c.lineWidth = 2;
+    c.beginPath(); c.moveTo(20, y0); c.lineTo(w - 20, y0); c.stroke();
+    c.strokeStyle = '#b45309'; c.lineWidth = 5;
+    c.beginPath(); c.moveTo(x0, y0); c.lineTo(x2, y2); c.stroke();
+    c.strokeStyle = '#b45309'; c.lineWidth = 2;
+    c.beginPath(); c.moveTo(x0, y0); c.lineTo(x0, y0 - Slen * Math.sin(viewTh)); c.stroke();
+    // 角度标注（醒目：填充扇形 + 弧线 + 大号标签）
+    c.fillStyle = 'rgba(251,191,36,0.28)';
+    c.beginPath(); c.moveTo(x0, y0); c.arc(x0, y0, 32, -viewTh, 0); c.closePath(); c.fill();
+    c.strokeStyle = '#f59e0b'; c.lineWidth = 2.5;
+    c.beginPath(); c.arc(x0, y0, 32, -viewTh, 0); c.stroke();
+    const angLx = x0 + Math.cos(viewTh / 2) * 46, angLy = y0 - Math.sin(viewTh / 2) * 46;
+    c.fillStyle = '#b45309'; c.font = 'bold 13px sans-serif'; c.textAlign = 'center';
+    c.fillText('θ = ' + fmt(p.thd, 1) + '°', angLx, angLy);
+
+    const b = 34;
+    const f = S.s / p.L;
+    const bx = x0 + Slen * f * Math.cos(viewTh), by = y0 - Slen * f * Math.sin(viewTh);
+    const nx = -Math.sin(viewTh), ny = -Math.cos(viewTh);   // 屏幕系（y 向下）法向
+    const cx = bx + nx * b * 0.62, cy = by + ny * b * 0.62;
+    rect2D(c, cx, cy, b + 26, b, -viewTh, '#ffedd5', '#c2410c');
+    c.save(); c.translate(cx, cy); c.rotate(-viewTh);
+    c.fillStyle = '#c2410c'; c.font = 'bold 11px sans-serif'; c.textAlign = 'center';
+    c.fillText('m = ' + fmt(p.m) + ' kg', 0, 3);
+    c.restore();
+
+    const mg = p.m * G, gx = mg * Math.sin(p.th), gy = mg * Math.cos(p.th);
+    const maxF = Math.max(mg, gx, gy, Math.abs(S.f), 1);
+    const sc = v => clamp(24 + 34 * Math.abs(v) / maxF, 12, 52);
+    const uxs = Math.cos(viewTh), uys = -Math.sin(viewTh);   // 沿面向上（屏幕）
+    const nxs = -Math.sin(viewTh), nys = -Math.cos(viewTh);  // 垂直向外（屏幕）
+
+    if ($('faDecomp').checked) {
+      arrow2D(c, cx, cy, uxs * sc(gx) * -1, uys * sc(gx) * -1, CSS.comp, 'mg sinθ = ' + fmt(gx) + ' N', true);
+      arrow2D(c, cx, cy, nxs * sc(gy) * -1, nys * sc(gy) * -1, CSS.comp, 'mg cosθ = ' + fmt(gy) + ' N', true);
+      // 平行四边形虚线
+      const e1x = cx - uxs * sc(gx), e1y = cy - uys * sc(gx);
+      c.strokeStyle = CSS.comp; c.lineWidth = 1; c.setLineDash([3, 4]);
+      c.beginPath(); c.moveTo(cx, cy + sc(mg)); c.lineTo(e1x, e1y); c.stroke();
+      c.beginPath(); c.moveTo(cx, cy + sc(mg)); c.lineTo(cx - nxs * sc(gy), cy - nys * sc(gy)); c.stroke();
+      c.setLineDash([]);
+    }
+    arrow2D(c, cx, cy, 0, sc(mg), CSS.gravity, 'mg = ' + fmt(mg) + ' N');
+    arrow2D(c, cx, cy, nxs * sc(gy), nys * sc(gy), CSS.normal, 'N = ' + fmt(gy) + ' N');
+    if (Math.abs(S.f) > 1e-6) arrow2D(c, cx, cy, Math.sign(S.f) * uxs * sc(S.f), Math.sign(S.f) * uys * sc(S.f), CSS.friction, 'f = ' + fmt(Math.abs(S.f)) + ' N');
+    if (showVel() && Math.abs(S.v) > 1e-9) arrow2D(c, cx, cy, Math.sign(S.v) * uxs * sc(S.v) * 0.5, Math.sign(S.v) * uys * sc(S.v) * 0.5, CSS.velocity, 'v');
+    c.fillStyle = '#0f172a'; c.textAlign = 'left'; c.font = 'bold 12px sans-serif';
+    c.fillText('受力分析 · 斜面（正交分解）　θ = ' + fmt(p.thd, 1) + '°', 30, 22);
+  }
+  function dispose() { scene.remove(grp); if (dmgSin) { scene.remove(dmgSin); dmgSin = null; } if (dmgCos) { scene.remove(dmgCos); dmgCos = null; } if (dmgLine) { scene.remove(dmgLine); dmgLine = null; } }
+  return {
+    id: 'incline',
+    series: [
+      { k: 'x', label: '位移 s / m', color: '#f87171' },
+      { k: 'v', label: '速度 v / (m·s⁻¹)', color: '#60a5fa' }
+    ],
+    knowledge: '<ul><li>正交分解：沿斜面 mg sinθ，垂直斜面 mg cosθ。</li><li>下滑加速度 a = g(sinθ − μcosθ)；上滑 a = g(sinθ + μcosθ)。</li><li>临界条件：tanθ = μ 时恰好静止或匀速（自锁）。</li><li>θ 越大下滑越快；μ 越大越难滑。</li><li>上滑到最高点后，若 mg sinθ &gt; μmg cosθ 将反向加速下滑。</li></ul>',
+    build, reset, step, sync, plotValues, updateUI, dispose,
+    onParam(p) {
+      if (p === 'th' || p === 'L') { if (wedge) rebuildWedge(readParams()); }
+      const prm = readParams();
+      if (block) { const { mesh, s } = block; if (Math.abs(blockSize(prm.m) - s) > 1e-4) { grp.remove(mesh); block = makeBlock(prm.m, 0xfb923c); grp.add(block.mesh); } }
+    },
+    cam: { pos: [13, 9, 17], target: [3.5, 2.5, 0] }
+  };
+}
+
+/* ============================================================
+   模型三：传送带模型
+   ============================================================ */
+function makeBeltModel() {
+  const S = { x: 0.5, v: 0, a: 0, f: 0, stuck: false, left: false, y: 1.2, vy: 0, scratch: 0, exitV: 0, landed: false };
+  let block, beltBody, beltTop, rollerL, rollerR, leg1, leg2, tex;
+  const grp = new THREE.Group();
+
+  function readParams() {
+    return { vb: val('belt-vb'), v0: val('belt-v0'), mu: val('belt-mu'), L: val('belt-L'), x0: val('belt-x0'), m: val('belt-m') };
+  }
+  function beltY() { return 1.2; }
+  function reset() {
+    const p = readParams();
+    S.x = clamp(p.x0, 0.3, p.L - 0.3);
+    S.v = p.v0; S.a = 0; S.f = 0; S.stuck = false; S.left = false;
+    S.y = beltY(); S.vy = 0; S.scratch = 0; S.exitV = 0; S.landed = false;
+    sim.t = 0;
+  }
+  function build() {
+    const p = readParams();
+    const L = p.L, BL = L + 0.1;   // 皮带略长，包住两端滚筒
+    beltBody = new THREE.Mesh(new THREE.BoxGeometry(BL, 0.16, 2.2), matBeltBody);
+    beltBody.position.set(L / 2, beltY() - 0.08, 0);
+    beltBody.castShadow = true; beltBody.receiveShadow = true;
+    grp.add(beltBody);
+    tex = (function () {
+      const cv = document.createElement('canvas'); cv.width = 256; cv.height = 256;
+      const c = cv.getContext('2d');
+      c.fillStyle = '#46586d'; c.fillRect(0, 0, 256, 256);
+      c.strokeStyle = '#fbbf24'; c.lineWidth = 7;
+      for (let i = -80; i < 336; i += 64) { c.beginPath(); c.moveTo(i, 256); c.lineTo(i + 36, 0); c.stroke(); }
+      const t = new THREE.CanvasTexture(cv);
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      return t;
+    })();
+    const topMat = new THREE.MeshStandardMaterial({ map: tex, color: 0xffffff, roughness: 0.6 });
+    beltTop = new THREE.Mesh(new THREE.BoxGeometry(BL, 0.05, 2.1), topMat);
+    beltTop.position.set(L / 2, beltY(), 0);
+    beltTop.receiveShadow = true;
+    grp.add(beltTop);
+    // 两端滚筒：Group 绕世界 Z 轴自转（避免欧拉角复合导致的摆动）
+    const drumGeo = new THREE.CylinderGeometry(0.22, 0.22, 2.6, 28);
+    const drumMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.4, metalness: 0.7 });
+    const barGeo = new THREE.BoxGeometry(0.5, 0.09, 0.08);
+    const barMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, roughness: 0.5 });
+    rollerL = new THREE.Group();
+    const drumL = new THREE.Mesh(drumGeo, drumMat);
+    drumL.rotation.x = Math.PI / 2;          // 圆柱轴向 Z
+    drumL.castShadow = true;
+    rollerL.add(drumL);
+    const barA = new THREE.Mesh(barGeo, barMat); barA.position.set(0, 0, 1.34); rollerL.add(barA);
+    const barB = new THREE.Mesh(barGeo, barMat); barB.position.set(0, 0, -1.34); rollerL.add(barB);
+    rollerL.position.set(-0.05, 0.98, 0);
+    grp.add(rollerL);
+    rollerR = rollerL.clone();
+    rollerR.position.set(L + 0.05, 0.98, 0);
+    grp.add(rollerR);
+    const legGeo = new THREE.BoxGeometry(0.22, 0.98, 0.22);
+    const legMat = matWall;
+    leg1 = new THREE.Mesh(legGeo, legMat); leg1.position.set(0.7, 0.49, 0.9); grp.add(leg1);
+    leg2 = new THREE.Mesh(legGeo, legMat); leg2.position.set(L - 0.7, 0.49, -0.9); grp.add(leg2);
+    block = makeBlock(p.m, 0xf472b6);
+    grp.add(block.mesh);
+    scene.add(grp);
+    reset();
+  }
+  function step(h) {
+    const p = readParams();
+    if (S.left) {
+      // 已离开传送带 → 抛体运动
+      S.vy -= G * h;
+      S.y += S.vy * h;
+      S.x += S.v * h;
+      if (S.y <= block.s / 2) { S.y = block.s / 2; S.landed = true; S.v = 0; S.vy = 0; }
+      return;
+    }
+    const vrel = S.v - p.vb;
+    if (Math.abs(vrel) > 1e-6) {
+      S.stuck = false;
+      const f = -Math.sign(vrel) * p.mu * blockMass(p) * G;
+      S.f = f;
+      S.a = f / blockMass(p);
+      const vNew = S.v + S.a * h;
+      if ((vrel) * (vNew - p.vb) < 0) { S.v = p.vb; S.stuck = true; S.a = 0; S.f = 0; }
+      else S.v = vNew;
+    } else {
+      S.stuck = true; S.a = 0; S.f = 0; S.v = p.vb;
+    }
+    S.x += S.v * h;
+    S.scratch += Math.abs(S.v - p.vb) * h;
+    if (S.x < 0 || S.x > p.L) {
+      S.left = true; S.exitV = S.v; S.vy = 0; S.y = beltY();
+    }
+  }
+  function blockMass(p) { return p.m; }
+  function sync() {
+    const p = readParams();
+    if (Math.abs(blockSize(p.m) - block.s) > 1e-4) { grp.remove(block.mesh); block = makeBlock(p.m, 0xf472b6); grp.add(block.mesh); }
+    const by = beltY();
+    const yPos = S.left ? S.y + block.s / 2 : by + block.s / 2 + 0.02;
+    block.mesh.position.set(S.x, yPos, 0);
+    if (!S.left) sim.follow.set(S.x, by + 0.5, 0);
+    else sim.follow.set(S.x, 1.5, 0);
+
+    // 传送带纹理滚动 + 滚筒自转（滚筒周长与带速匹配，绕世界 Z 轴）
+    if (sim.running && tex) {
+      const dAng = p.vb / 0.22 * (sim.lastDt || 0.016);
+      rollerL.rotation.z -= dAng;   // 负向旋转 → 滚筒顶端线速度 +x，与皮带方向一致
+      rollerR.rotation.z -= dAng;
+      tex.offset.x -= p.vb / (p.L + 0.1) * (sim.lastDt || 0.016);
+    }
+
+    const o = block.mesh.position.clone();
+    const btm = o.clone(); btm.y -= block.s / 2;   // 接触面
+    const mg = p.m * G;
+    let n = 0;
+    if (showForces()) {
+      placeArrow(n++, o, new THREE.Vector3(0, -1, 0), mg, COL.gravity);
+      placeArrow(n++, btm, new THREE.Vector3(0, 1, 0), mg, COL.normal);
+      if (!S.stuck && !S.left && Math.abs(S.f) > 1e-6)
+        placeArrow(n++, btm, new THREE.Vector3(Math.sign(S.f), 0, 0), Math.abs(S.f), COL.friction);
+      if (showVel()) {
+        if (!S.left) placeArrow(n++, o, new THREE.Vector3(Math.sign(S.v) || 1, 0, 0), Math.abs(S.v) * 0.9, COL.velocity);
+        if (!S.left && $('faRelative').checked)
+          placeArrow(n++, o.clone().add(new THREE.Vector3(0, 0.5, 0)), new THREE.Vector3(Math.sign(p.vb) || 1, 0, 0), Math.abs(p.vb) * 0.9, 0x7dd3fc);
+      }
+    }
+    clearPools(n);
+    if (showLabels()) {
+      let i = 0;
+      placeLabel(i++, 'mg = ' + fmt(mg) + ' N', o.clone().add(new THREE.Vector3(0, -0.9, 0)));
+      placeLabel(i++, 'N = ' + fmt(mg) + ' N', o.clone().add(new THREE.Vector3(0, 1.0, 0)));
+      if (!S.stuck && !S.left && Math.abs(S.f) > 1e-6)
+        placeLabel(i++, 'f = ' + fmt(Math.abs(S.f)) + ' N', o.clone().add(new THREE.Vector3(-Math.sign(S.f) * 1.5, -0.5, 0)));
+      if (showVel()) {
+        if (!S.left) placeLabel(i++, 'v = ' + fmt(S.v) + ' m/s', o.clone().add(new THREE.Vector3(0, 1.6, 0)));
+        if (!S.left && $('faRelative').checked)
+          placeLabel(i++, 'v带 = ' + fmt(p.vb) + ' m/s', o.clone().add(new THREE.Vector3(Math.sign(p.vb) * 2, 1.8, 0)));
+      }
+      if (S.left) placeLabel(i++, '离开！v = ' + fmt(S.exitV) + ' m/s', o.clone().add(new THREE.Vector3(0, 1.6, 0)));
+      for (let j = i; j < labelPool.length; j++) labelPool[j].visible = false;
+    }
+    // 几何更新
+    if (Math.abs(beltBody.geometry.parameters.width - (p.L + 0.1)) > 1e-6) {
+      const L = p.L, BL = L + 0.1;
+      beltBody.geometry.dispose(); beltBody.geometry = new THREE.BoxGeometry(BL, 0.16, 2.2);
+      beltBody.position.x = L / 2;
+      beltTop.geometry.dispose(); beltTop.geometry = new THREE.BoxGeometry(BL, 0.05, 2.1);
+      beltTop.position.x = L / 2;
+      rollerR.position.x = L + 0.05;
+      leg2.position.x = L - 0.7;
+    }
+  }
+  function plotValues() { return { x: S.x, v: S.v, vrel: S.left ? 0 : S.v - readParams().vb }; }
+  function forces() {
+    const mg = readParams().m * G;
+    const list = [
+      { name: '重力 G', color: CSS.gravity, dir: '竖直向下', val: fmt(mg) + ' N' },
+      { name: '支持力 N', color: CSS.normal, dir: '竖直向上', val: fmt(mg) + ' N' }
+    ];
+    if (!S.stuck && !S.left && Math.abs(S.f) > 1e-6)
+      list.push({ name: '滑动摩擦力 f', color: CSS.friction, dir: S.f > 0 ? '水平向右（与带同向）' : '水平向左（与带反向）', val: fmt(Math.abs(S.f)) + ' N' });
+    else if (!S.left) list.push({ name: '摩擦力 f', color: CSS.friction, dir: '—', val: '0 N（共速，无摩擦）' });
+    return list;
+  }
+  function eqns() {
+    const p = readParams();
+    const arr = [];
+    if (!S.left) {
+      if (S.stuck) arr.push('v = v带 = ' + fmt(p.vb) + ' m/s → 相对速度为零，摩擦力消失');
+      else {
+        arr.push('f = μmg = ' + fmt(p.mu * p.m * G) + ' N，a = μg = ' + fmt(p.mu * G) + ' m/s²');
+        arr.push('相对速度 v_rel = v − v带 = ' + fmt(S.v - p.vb) + ' m/s');
+        const t0 = Math.abs(S.v - p.vb) / (p.mu * G);
+        arr.push('预计共速时间 t₀ = |v−v带|/μg = ' + fmt(t0) + ' s');
+      }
+      arr.push('划痕长度（相对位移）Δx = ' + fmt(S.scratch) + ' m');
+    } else {
+      arr.push('物块已离开传送带，离开速度 v = ' + fmt(S.exitV) + ' m/s');
+      if (S.landed) arr.push('抛体落地，全过程结束。划痕总长 = ' + fmt(S.scratch) + ' m');
+    }
+    return arr;
+  }
+  function statusHTML() {
+    const p = readParams();
+    if (S.left)
+      return S.landed
+        ? '✅ 物块已离开传送带并落地。离开速度 v = <b>' + fmt(S.exitV) + ' m/s</b>；全程划痕 Δx = <b>' + fmt(S.scratch) + ' m</b>。'
+        : '🪂 物块离开传送带，做<b>平抛运动</b>，水平速度 v = ' + fmt(S.exitV) + ' m/s…';
+    if (S.stuck)
+      return '🔗 物块已与传送带<b>共速</b>（v = v带 = ' + fmt(p.vb) + ' m/s），此后一起匀速运动。<br>共速前划痕（相对位移）Δx = ' + fmt(S.scratch) + ' m。<br><span style="color:#475569">规律：共速时间 t₀ = |v₀−v带|/(μg)。</span>';
+    const vrel = S.v - p.vb;
+    return vrel > 0
+      ? '🛑 物块速度大于传送带，摩擦力向后，<b>减速</b>直至共速（a = −μg = −' + fmt(p.mu * G) + ' m/s²）。'
+      : '🚀 物块速度小于传送带，摩擦力向前，<b>加速</b>直至共速（a = μg = ' + fmt(p.mu * G) + ' m/s²）。';
+  }
+  function updateUI() {
+    const p = readParams();
+    const vrel = S.left ? 0 : S.v - p.vb;
+    $('readouts').innerHTML =
+      '<span class="chip">t = <b>' + fmt(sim.t) + ' s</b></span>' +
+      '<span class="chip">x = <b>' + fmt(S.x) + ' m</b></span>' +
+      '<span class="chip" style="color:#60a5fa">v = <b>' + fmt(S.v) + ' m/s</b></span>' +
+      '<span class="chip" style="color:#fbbf24">v带 = <b>' + fmt(p.vb) + ' m/s</b></span>' +
+      '<span class="chip" style="color:#f472b6">v_rel = <b>' + fmt(vrel) + ' m/s</b></span>' +
+      '<span class="chip" style="color:#f87171">划痕 = <b>' + fmt(S.scratch) + ' m</b></span>';
+    $('statusbar').textContent = S.left
+      ? (S.landed ? '已落地 · 离开速度 ' + fmt(S.exitV) + ' m/s · 划痕 ' + fmt(S.scratch) + ' m' : '物块离开传送带，平抛中…')
+      : (S.stuck ? '已共速（v = v带 = ' + fmt(p.vb) + ' m/s）· 划痕 ' + fmt(S.scratch) + ' m' : '相对滑动中（v_rel = ' + fmt(vrel) + ' m/s）· 划痕 ' + fmt(S.scratch) + ' m');
+    renderForces(forces());
+    renderEqns(eqns());
+    renderEnergy(null);
+    renderStatus(statusHTML());
+    drawSchematic();
+  }
+  function drawSchematic() {
+    const fit = fitFACanvas(); if (!fit) return;
+    const { c, w, h } = fit;
+    const p = readParams();
+    const bx0 = 50, bx1 = w - 50, by = 168;
+    // 支架
+    c.strokeStyle = '#94a3b8'; c.lineWidth = 3;
+    c.beginPath(); c.moveTo(bx0 + 8, by); c.lineTo(bx0 + 8, by + 46); c.stroke();
+    c.beginPath(); c.moveTo(bx1 - 8, by); c.lineTo(bx1 - 8, by + 46); c.stroke();
+    // 滚筒
+    c.fillStyle = '#94a3b8';
+    c.beginPath(); c.arc(bx0, by, 13, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(bx1, by, 13, 0, Math.PI * 2); c.fill();
+    // 带
+    c.fillStyle = '#475569';
+    c.fillRect(bx0, by - 10, bx1 - bx0, 20);
+    c.strokeStyle = '#fbbf24'; c.lineWidth = 2; c.setLineDash([10, 8]);
+    c.beginPath(); c.moveTo(bx0 + 4, by); c.lineTo(bx1 - 4, by); c.stroke();
+    c.setLineDash([]);
+    // 物块
+    const f = clamp(S.x / p.L, 0.02, 0.98);
+    const cx = bx0 + (bx1 - bx0) * f;
+    rect2D(c, cx, by - 42, 62, 40, 0, '#fce7f3', '#db2777');
+    c.fillStyle = '#db2777'; c.font = 'bold 11px sans-serif'; c.textAlign = 'center';
+    c.fillText('m', cx, by - 39);
+    const mg = G;
+    const sc = 40;
+    arrow2D(c, cx, by - 62, 0, sc, CSS.gravity, 'mg');
+    arrow2D(c, cx, by - 62, 0, -sc, CSS.normal, 'N');
+    if (!S.stuck && !S.left && Math.abs(S.f) > 1e-6) arrow2D(c, cx, by - 22, Math.sign(S.f) * 36, 0, CSS.friction, 'f');
+    if (showVel()) {
+      arrow2D(c, cx, by - 86, Math.sign(S.v) * 26 || 26, 0, CSS.velocity, 'v = ' + fmt(S.v));
+      if ($('faRelative').checked) arrow2D(c, cx, by - 104, Math.sign(p.vb) * 26 || 26, 0, '#7dd3fc', 'v带 = ' + fmt(p.vb));
+    }
+    c.fillStyle = '#475569'; c.textAlign = 'center'; c.font = '12px sans-serif';
+    c.fillText('← 传送带（' + (p.vb >= 0 ? '向右' : '向左') + ' ' + fmt(Math.abs(p.vb)) + ' m/s）→', (bx0 + bx1) / 2, by + 38);
+    c.fillStyle = '#0f172a'; c.textAlign = 'left'; c.font = 'bold 12px sans-serif';
+    c.fillText('受力分析 · 传送带（摩擦力方向取决于相对速度）', 30, 22);
+    if (S.stuck) { c.fillStyle = '#16a34a'; c.fillText('✓ 已共速：f = 0', cx + 60, by - 100); }
+  }
+  function dispose() { scene.remove(grp); }
+  return {
+    id: 'belt',
+    series: [
+      { k: 'v', label: 'v / (m·s⁻¹)', color: '#60a5fa' },
+      { k: 'vrel', label: 'v_rel / (m·s⁻¹)', color: '#fbbf24' },
+      { k: 'x', label: '位移 x / m', color: '#f87171' }
+    ],
+    knowledge: '<ul><li>摩擦力方向由<b>相对速度 v − v带</b>决定：总使两者趋于共速。</li><li>共速后摩擦力消失，一起匀速。</li><li>划痕长度 = 相对位移 = ∫|v − v带|dt，是经典考点。</li><li>逆向冲上：先减速到零（位移 x₁ = v₀²/2μg），再反向加速到带速。</li><li>传送带足够短时物块全程加速，离开速度 v = √(v₀² + 2μgL)。</li></ul>',
+    build, reset, step, sync, plotValues, updateUI, dispose,
+    cam: { pos: [9, 5, 12], target: [4, 1.4, 0] }
+  };
+}
+
+/* ============================================================
+   模型四：弹簧振子
+   ============================================================ */
+function makeSpringModel() {
+  const S = { x: 1, v: 0, a: 0, Ek: 0, Ep: 0, E0: 1 };
+  let block, wall, springMesh, slab;
+  const grp = new THREE.Group();
+  const L0 = 3;   // 弹簧原长（视觉）
+
+  function readParams() {
+    return { m: val('spring-m'), k: val('spring-k'), x0: val('spring-x0'), v0: val('spring-v0'), b: val('spring-b') };
+  }
+  function reset() {
+    const p = readParams();
+    S.x = p.x0; S.v = p.v0; S.a = (-p.k * S.x - p.b * S.v) / p.m;
+    S.E0 = 0.5 * p.m * S.v * S.v + 0.5 * p.k * S.x * S.x;
+    sim.t = 0;
+  }
+  function build() {
+    const p = readParams();
+    slab = makeSlab(12, 1.7, 0.1, 0.05);
+    slab.position.x = 6;
+    grp.add(slab);
+    wall = new THREE.Mesh(new THREE.BoxGeometry(0.3, 2.4, 2.4), matWall);
+    wall.position.set(-0.15, 1.2, 0);
+    wall.castShadow = true;
+    grp.add(wall);
+    springMesh = makeSpringMesh(L0 + 1, 13, 0.16);
+    springMesh.userData.len = -1;
+    block = makeBlock(p.m, 0xa78bfa);
+    grp.add(block.mesh);
+    scene.add(grp);
+    reset();
+  }
+  function blockX() { return L0 + S.x + block.s / 2; }
+  function step(h) {
+    const p = readParams();
+    S.a = (-p.k * S.x - p.b * S.v) / p.m;
+    S.v += S.a * h;
+    S.x += S.v * h;
+  }
+  function sync() {
+    const p = readParams();
+    const bx = blockX();
+    block.mesh.position.set(bx, 0.07 + block.s / 2, 0);
+    // 弹簧
+    const springLen = clamp(L0 + S.x, 0.35, 10);
+    if (!springMesh || Math.abs(springMesh.userData.len - springLen) > 0.01) {
+      if (springMesh) { grp.remove(springMesh); springMesh.geometry.dispose(); }
+      springMesh = makeSpringMesh(springLen, 13, 0.16);
+      springMesh.userData.len = springLen;
+      grp.add(springMesh);
+    }
+    springMesh.position.set(springLen / 2, 0.07 + block.s / 2, 0);
+    sim.follow.set(bx, 1.1, 0);
+
+    const o = block.mesh.position.clone();
+    const btm = o.clone(); btm.y -= block.s / 2;                 // 接触面
+    const left = o.clone(); left.x -= block.s / 2;               // 弹簧挂钩点
+    const mg = p.m * G;
+    const F = -p.k * S.x;
+    let n = 0;
+    if (showForces()) {
+      placeArrow(n++, o, new THREE.Vector3(0, -1, 0), mg, COL.gravity);
+      placeArrow(n++, btm, new THREE.Vector3(0, 1, 0), mg, COL.normal);
+      if (Math.abs(F) > 1e-6)
+        placeArrow(n++, left, new THREE.Vector3(Math.sign(F), 0, 0), Math.abs(F), COL.spring);
+      if (showVel() && Math.abs(S.v) > 1e-9)
+        placeArrow(n++, o, new THREE.Vector3(Math.sign(S.v), 0, 0), Math.abs(S.v) * 0.9, COL.velocity);
+    }
+    clearPools(n);
+    if (showLabels()) {
+      let i = 0;
+      placeLabel(i++, 'mg = ' + fmt(mg) + ' N', o.clone().add(new THREE.Vector3(0, -0.9, 0)));
+      placeLabel(i++, 'N = ' + fmt(mg) + ' N', o.clone().add(new THREE.Vector3(0, 1.1, 0)));
+      if (Math.abs(F) > 1e-6)
+        placeLabel(i++, 'F弹 = −kx = ' + fmt(F) + ' N', o.clone().add(new THREE.Vector3(Math.sign(F) * 1.7, 0.5, 0)));
+      if (showVel() && Math.abs(S.v) > 1e-9)
+        placeLabel(i++, 'v = ' + fmt(S.v) + ' m/s', o.clone().add(new THREE.Vector3(0, 1.7, 0)));
+      for (let j = i; j < labelPool.length; j++) labelPool[j].visible = false;
+    }
+    S.Ek = 0.5 * p.m * S.v * S.v;
+    S.Ep = 0.5 * p.k * S.x * S.x;
+    if (Math.abs(blockSize(p.m) - block.s) > 1e-4) {
+      grp.remove(block.mesh);
+      block = makeBlock(p.m, 0xa78bfa);
+      grp.add(block.mesh);
+    }
+  }
+  function plotValues() { return { x: S.x, v: S.v, a: S.a }; }
+  function forces() {
+    const p = readParams();
+    const F = -p.k * S.x;
+    const list = [
+      { name: '重力 G', color: CSS.gravity, dir: '竖直向下', val: fmt(p.m * G) + ' N' },
+      { name: '支持力 N', color: CSS.normal, dir: '竖直向上', val: fmt(p.m * G) + ' N' }
+    ];
+    if (Math.abs(F) > 1e-6) list.push({ name: '弹簧弹力 F', color: CSS.spring, dir: F > 0 ? '水平向右' : '水平向左', val: fmt(Math.abs(F)) + ' N' });
+    return list;
+  }
+  function eqns() {
+    const p = readParams();
+    const w = Math.sqrt(p.k / p.m), T = 2 * Math.PI / w;
+    return [
+      'F = −kx = ' + fmt(-p.k * S.x) + ' N（回复力，指向平衡位置）',
+      'a = F/m = ' + fmt(S.a) + ' m/s²',
+      'ω = √(k/m) = ' + fmt(w) + ' rad/s',
+      '周期 T = 2π√(m/k) = ' + fmt(T) + ' s（与振幅无关）' + (p.b > 0 ? '（有阻尼）' : '')
+    ];
+  }
+  function statusHTML() {
+    const p = readParams();
+    const T = 2 * Math.PI * Math.sqrt(p.m / p.k);
+    if (p.b > 0) return '🌊 <b>阻尼振动</b>：振幅随时间衰减（b = ' + fmt(p.b) + '）。固有周期 T₀ = ' + fmt(T) + ' s。<br><span style="color:#475569">欠阻尼：b² &lt; 4mk 时仍往复振动。</span>';
+    return '🌀 <b>简谐运动（SHM）</b>：x = Acos(ωt + φ)。<br>周期 T = 2π√(m/k) = ' + fmt(T) + ' s，与振幅、初速无关。<br>验证：改变 k 或 m 观察周期变化；右侧能量图验证机械能守恒。';
+  }
+  function updateUI() {
+    const p = readParams();
+    const T = 2 * Math.PI * Math.sqrt(p.m / p.k);
+    $('readouts').innerHTML =
+      '<span class="chip">t = <b>' + fmt(sim.t) + ' s</b></span>' +
+      '<span class="chip">x = <b>' + fmt(S.x) + ' m</b></span>' +
+      '<span class="chip" style="color:#60a5fa">v = <b>' + fmt(S.v) + ' m/s</b></span>' +
+      '<span class="chip" style="color:#34d399">a = <b>' + fmt(S.a) + ' m/s²</b></span>' +
+      '<span class="chip" style="color:#a855f7">T = <b>' + fmt(T) + ' s</b></span>';
+    $('statusbar').textContent = p.b > 0 ? '阻尼振动（振幅衰减中）' : '简谐运动：T = ' + fmt(T) + ' s，x = ' + fmt(S.x) + ' m';
+    renderForces(forces());
+    renderEqns(eqns());
+    const Et = S.Ek + S.Ep;
+    renderEnergy([
+      { label: '动能 Ek = ½mv²', color: '#60a5fa', val: fmt(S.Ek) },
+      { label: '势能 Ep = ½kx²', color: '#a855f7', val: fmt(S.Ep) },
+      { label: '总机械能 E', color: '#16a34a', val: fmt(Et) }
+    ], Math.max(S.E0, Et), );
+    const dE = Math.abs(Et - S.E0);
+    $('faEnergy').innerHTML += '<div class="eqbox" style="color:' + (dE < 0.05 ? '#16a34a' : '#dc2626') + '">ΔE = |E − E₀| = ' + fmt(dE, 4) + ' J ' + (dE < 0.05 ? '✓ 机械能守恒' : '（数值误差，属正常）') + '</div>';
+    renderStatus(statusHTML());
+    drawSchematic();
+  }
+  function drawSchematic() {
+    const fit = fitFACanvas(); if (!fit) return;
+    const { c, w, h } = fit;
+    const p = readParams();
+    const wallX = 55, gndY = 195, pxm = 34;   // 34 px/m
+    c.strokeStyle = '#94a3b8'; c.lineWidth = 2;
+    c.beginPath(); c.moveTo(30, gndY); c.lineTo(w - 30, gndY); c.stroke();
+    // 墙
+    c.fillStyle = '#64748b';
+    c.fillRect(wallX - 6, gndY - 90, 12, 90);
+    c.strokeRect(wallX - 6, gndY - 90, 12, 90);
+    // 弹簧（锯齿线，长度随位移 x 实时伸缩：L0 + x）
+    const springLen = clamp((L0 + S.x) * pxm, 20, w - wallX - 120);
+    const x0 = wallX, x1 = wallX + springLen;
+    const bx = x1 + 23;
+    c.strokeStyle = '#a855f7'; c.lineWidth = 2.5;
+    c.beginPath(); c.moveTo(x0, gndY - 45);
+    const coils = 6;
+    for (let i = 1; i <= coils * 2; i++) {
+      const tx = x0 + (x1 - x0) * i / (coils * 2);
+      const ty = gndY - 45 + (i % 2 === 0 ? -12 : 12);
+      c.lineTo(tx, ty);
+    }
+    c.stroke();
+    // 物块
+    rect2D(c, bx, gndY - 45, 46, 46, 0, '#ede9fe', '#7c3aed');
+    c.fillStyle = '#7c3aed'; c.font = 'bold 11px sans-serif'; c.textAlign = 'center';
+    c.fillText('m', bx, gndY - 42);
+    const F = -p.k * S.x;
+    const mg = p.m * G;
+    const sc = 42;
+    arrow2D(c, bx, gndY - 68, 0, sc, CSS.gravity, 'mg = ' + fmt(mg));
+    arrow2D(c, bx, gndY - 68, 0, -sc, CSS.normal, 'N');
+    if (Math.abs(F) > 1e-6) arrow2D(c, bx, gndY - 45, Math.sign(F) * 46, 0, CSS.spring, 'F = −kx = ' + fmt(F) + ' N');
+    if (showVel() && Math.abs(S.v) > 1e-9) arrow2D(c, bx, gndY - 92, Math.sign(S.v) * 26, 0, CSS.velocity, 'v');
+    // 平衡位置标记（x=0 时物块中心位置 = wallX + L0·pxm + 23）
+    c.strokeStyle = '#f59e0b'; c.setLineDash([5, 5]); c.lineWidth = 1.4;
+    const eqX = wallX + L0 * pxm + 23;
+    c.beginPath(); c.moveTo(eqX, gndY - 95); c.lineTo(eqX, gndY + 2); c.stroke();
+    c.setLineDash([]);
+    c.fillStyle = '#d97706'; c.font = '11px sans-serif'; c.textAlign = 'left';
+    c.fillText('平衡位置 O', eqX + 4, gndY - 76);
+    c.fillStyle = '#0f172a'; c.textAlign = 'left'; c.font = 'bold 12px sans-serif';
+    c.fillText('受力分析 · 弹簧振子（F = −kx 指向平衡位置）', 30, 22);
+    c.fillText('x = ' + fmt(S.x) + ' m' + (S.x > 0 ? '（拉伸）' : S.x < 0 ? '（压缩）' : '（平衡）'), w - 160, 22);
+  }
+  function dispose() { scene.remove(grp); }
+  return {
+    id: 'spring',
+    series: [
+      { k: 'x', label: '位移 x / m', color: '#f87171' },
+      { k: 'v', label: '速度 v / (m·s⁻¹)', color: '#60a5fa' },
+      { k: 'a', label: '加速度 a / (m·s⁻²)', color: '#34d399' }
+    ],
+    knowledge: '<ul><li>胡克定律：F = −kx，负号表示回复力指向平衡位置。</li><li>周期 T = 2π√(m/k)：只与 m、k 有关，与振幅无关。</li><li>能量守恒：½mv² + ½kx² = 恒量（无阻尼）。</li><li>平衡位置速度最大、加速度为零；最大位移处速度为零、加速度最大。</li><li>阻尼振动：振幅指数衰减，周期略大于固有周期。</li></ul>',
+    build, reset, step, sync, plotValues, updateUI, dispose,
+    cam: { pos: [8, 4.5, 11], target: [4, 1, 0] }
+  };
+}
+
+/* ============================================================
+   模型五：连接体（两物块紧靠，水平力推动）
+   ============================================================ */
+function makeLinkedModel() {
+  const S = { x: 1.5, v: 0, a: 0, Nc: 0, f1: 0, f2: 0, fTotal: 0, static: false };
+  let b1, b2, slab;
+  const grp = new THREE.Group();
+  let faMode = 'isolate';
+
+  function readParams() {
+    return { m1: val('linked-m1'), m2: val('linked-m2'), F: val('linked-F'), mu: val('linked-mu'), apply: $('linked-apply').value };
+  }
+  function reset() {
+    const p = readParams();
+    const s1 = blockSize(p.m1), s2 = blockSize(p.m2);
+    S.x = s1 / 2 + 0.5;
+    S.v = 0; S.a = 0; S.Nc = 0; S.f1 = 0; S.f2 = 0; S.fTotal = 0; S.static = false;
+    sim.t = 0;
+  }
+  function build() {
+    const p = readParams();
+    slab = makeSlab(30, 1.7, 0.1, 0.05);
+    slab.position.x = 15;
+    grp.add(slab);
+    b1 = makeBlock(p.m1, 0x34d399);
+    b2 = makeBlock(p.m2, 0x2dd4bf);
+    grp.add(b1.mesh);
+    grp.add(b2.mesh);
+    scene.add(grp);
+    reset();
+  }
+  function x2pos(p) {
+    const s1 = b1.s, s2 = b2.s;
+    return S.x + (s1 + s2) / 2;
+  }
+  function step(h) {
+    const p = readParams();
+    const M = p.m1 + p.m2;
+    const fsMax = p.mu * M * G;
+    if (Math.abs(S.v) < 1e-9 && p.F <= fsMax + 1e-9) {
+      S.static = true; S.a = 0;
+      S.fTotal = p.F;
+      if (p.apply === 'm1') {
+        S.f1 = Math.min(p.mu * p.m1 * G, p.F);
+        S.Nc = p.F - S.f1;
+        S.f2 = S.Nc;
+      } else {
+        S.f2 = Math.min(p.mu * p.m2 * G, p.F);
+        S.Nc = p.F - S.f2;
+        S.f1 = S.Nc;
+      }
+    } else {
+      S.static = false;
+      S.fTotal = p.mu * M * G;
+      S.a = (p.F - S.fTotal) / M;
+      if (p.apply === 'm1') {
+        S.f2 = p.mu * p.m2 * G;
+        S.Nc = p.m2 * S.a + S.f2;
+        S.f1 = p.mu * p.m1 * G;
+      } else {
+        S.f1 = p.mu * p.m1 * G;
+        S.Nc = p.m1 * S.a + S.f1;
+        S.f2 = p.mu * p.m2 * G;
+      }
+      S.v += S.a * h;
+      S.x += S.v * h;
+    }
+  }
+  function sync() {
+    const p = readParams();
+    const s1 = b1.s, s2 = b2.s;
+    b1.mesh.position.set(S.x, 0.07 + s1 / 2, 0);
+    b2.mesh.position.set(x2pos(p), 0.07 + s2 / 2, 0);
+    sim.follow.set(S.x + s1, 1.1, 0);
+
+    const o1 = b1.mesh.position.clone(), o2 = b2.mesh.position.clone();
+    const btm1 = o1.clone(); btm1.y -= b1.s / 2;   // 接触面
+    const btm2 = o2.clone(); btm2.y -= b2.s / 2;
+    const mg1 = p.m1 * G, mg2 = p.m2 * G;
+    let n = 0;
+    if (showForces()) {
+      placeArrow(n++, o1, new THREE.Vector3(0, -1, 0), mg1, COL.gravity);
+      placeArrow(n++, btm1, new THREE.Vector3(0, 1, 0), mg1, COL.normal);
+      placeArrow(n++, o2, new THREE.Vector3(0, -1, 0), mg2, COL.gravity);
+      placeArrow(n++, btm2, new THREE.Vector3(0, 1, 0), mg2, COL.normal);
+      if (p.apply === 'm1') {
+        placeArrow(n++, o1.clone().add(new THREE.Vector3(-s1 / 2, 0, 0)), new THREE.Vector3(1, 0, 0), p.F, COL.applied);
+        if (Math.abs(S.Nc) > 1e-6) {
+          placeArrow(n++, o1.clone().add(new THREE.Vector3(s1 / 2, 0, 0)), new THREE.Vector3(-1, 0, 0), S.Nc, COL.contact);
+          placeArrow(n++, o2.clone().add(new THREE.Vector3(-s2 / 2, 0, 0)), new THREE.Vector3(1, 0, 0), S.Nc, COL.contact);
+        }
+      } else {
+        placeArrow(n++, o2.clone().add(new THREE.Vector3(s2 / 2, 0, 0)), new THREE.Vector3(1, 0, 0), p.F, COL.applied);
+        if (Math.abs(S.Nc) > 1e-6) {
+          placeArrow(n++, o2.clone().add(new THREE.Vector3(-s2 / 2, 0, 0)), new THREE.Vector3(-1, 0, 0), S.Nc, COL.contact);
+          placeArrow(n++, o1.clone().add(new THREE.Vector3(s1 / 2, 0, 0)), new THREE.Vector3(1, 0, 0), S.Nc, COL.contact);
+        }
+      }
+      if (!S.static) {
+        if (Math.abs(S.f1) > 1e-6) placeArrow(n++, btm1, new THREE.Vector3(-1, 0, 0), Math.abs(S.f1), COL.friction);
+        if (Math.abs(S.f2) > 1e-6) placeArrow(n++, btm2, new THREE.Vector3(-1, 0, 0), Math.abs(S.f2), COL.friction);
+      } else {
+        if (Math.abs(S.f1) > 1e-6) placeArrow(n++, btm1, new THREE.Vector3(-1, 0, 0), Math.abs(S.f1), COL.friction);
+        if (Math.abs(S.f2) > 1e-6) placeArrow(n++, btm2, new THREE.Vector3(-1, 0, 0), Math.abs(S.f2), COL.friction);
+      }
+      if (showVel() && Math.abs(S.v) > 1e-9)
+        placeArrow(n++, o1.clone().add(new THREE.Vector3(0, 0.9, 0)), new THREE.Vector3(Math.sign(S.v), 0, 0), Math.abs(S.v) * 0.9, COL.velocity);
+    }
+    clearPools(n);
+    if (showLabels()) {
+      let i = 0;
+      placeLabel(i++, 'm₁g = ' + fmt(mg1) + ' N', o1.clone().add(new THREE.Vector3(-0.8, -1.0, 0)));
+      placeLabel(i++, 'm₂g = ' + fmt(mg2) + ' N', o2.clone().add(new THREE.Vector3(0.8, -1.0, 0)));
+      if (p.apply === 'm1') placeLabel(i++, 'F = ' + fmt(p.F) + ' N', o1.clone().add(new THREE.Vector3(-s1 / 2 - 1.2, 0.3, 0)));
+      else placeLabel(i++, 'F = ' + fmt(p.F) + ' N', o2.clone().add(new THREE.Vector3(s2 / 2 + 1.2, 0.3, 0)));
+      if (Math.abs(S.Nc) > 1e-6) {
+        placeLabel(i++, 'N₁₂ = ' + fmt(S.Nc) + ' N', o2.clone().add(new THREE.Vector3(-s2 / 2 + 0.2, 0.8, 0)));
+        placeLabel(i++, 'N₂₁ = ' + fmt(S.Nc) + ' N', o1.clone().add(new THREE.Vector3(s1 / 2 - 0.2, -0.8, 0)));
+      }
+      if (showVel() && Math.abs(S.v) > 1e-9)
+        placeLabel(i++, 'v = ' + fmt(S.v) + ' m/s', o1.clone().add(new THREE.Vector3(0, 1.8, 0)));
+      for (let j = i; j < labelPool.length; j++) labelPool[j].visible = false;
+    }
+    if (Math.abs(blockSize(p.m1) - b1.s) > 1e-4) { grp.remove(b1.mesh); b1 = makeBlock(p.m1, 0x34d399); grp.add(b1.mesh); }
+    if (Math.abs(blockSize(p.m2) - b2.s) > 1e-4) { grp.remove(b2.mesh); b2 = makeBlock(p.m2, 0x2dd4bf); grp.add(b2.mesh); }
+  }
+  function plotValues() { return { x: S.x, v: S.v, a: S.a }; }
+  function forces() {
+    const p = readParams();
+    const list = [
+      { name: 'G₁', color: CSS.gravity, dir: '竖直向下', val: fmt(p.m1 * G) + ' N' },
+      { name: 'G₂', color: CSS.gravity, dir: '竖直向下', val: fmt(p.m2 * G) + ' N' },
+      { name: 'N₁（地面）', color: CSS.normal, dir: '竖直向上', val: fmt(p.m1 * G) + ' N' },
+      { name: 'N₂（地面）', color: CSS.normal, dir: '竖直向上', val: fmt(p.m2 * G) + ' N' },
+      { name: '推力 F', color: CSS.applied, dir: '水平向右', val: fmt(p.F) + ' N' },
+      { name: p.apply === 'm1' ? '接触力 N₁₂（m₁ 对 m₂）' : '接触力 N₂₁（m₂ 对 m₁）', color: CSS.contact, dir: '水平向右', val: fmt(S.Nc) + ' N' }
+    ];
+    if (!S.static && Math.abs(S.fTotal) > 1e-6) {
+      list.push({ name: 'f₁', color: CSS.friction, dir: '水平向左', val: fmt(Math.abs(S.f1)) + ' N' });
+      list.push({ name: 'f₂', color: CSS.friction, dir: '水平向左', val: fmt(Math.abs(S.f2)) + ' N' });
+    } else if (S.static) {
+      list.push({ name: 'f₁（静）', color: CSS.friction, dir: '与 F 反向', val: fmt(Math.abs(S.f1)) + ' N' });
+      list.push({ name: 'f₂（静）', color: CSS.friction, dir: '与 F 反向', val: fmt(Math.abs(S.f2)) + ' N' });
+    }
+    return list;
+  }
+  function eqns() {
+    const p = readParams();
+    const M = p.m1 + p.m2;
+    if (S.static) return [
+      '整体法：F = ' + fmt(p.F) + ' N ≤ μ(m₁+m₂)g = ' + fmt(p.mu * M * G) + ' N → 系统静止',
+      '静摩擦力分配：f₁ = ' + fmt(Math.abs(S.f1)) + ' N，f₂ = ' + fmt(Math.abs(S.f2)) + ' N',
+      '接触力：N = ' + fmt(S.Nc) + ' N（' + (p.apply === 'm1' ? 'm₁ 压 m₂' : 'm₂ 压 m₁') + '）'
+    ];
+    const arr = [
+      '整体法：a = (F − μ(m₁+m₂)g)/(m₁+m₂) = (' + fmt(p.F) + ' − ' + fmt(p.mu * M * G) + ')/' + fmt(M) + ' = ' + fmt(S.a) + ' m/s²'
+    ];
+    if (p.apply === 'm1') {
+      arr.push('隔离 m₂：N₁₂ − μm₂g = m₂a → N₁₂ = m₂(a + μg) = ' + fmt(p.m2) + '×(' + fmt(S.a) + '+' + fmt(p.mu * G) + ') = ' + fmt(S.Nc) + ' N');
+      arr.push('隔离 m₁：F − N₂₁ − μm₁g = m₁a（验证）');
+    } else {
+      arr.push('隔离 m₁：N₂₁ − μm₁g = m₁a → N₂₁ = m₁(a + μg) = ' + fmt(p.m1) + '×(' + fmt(S.a) + '+' + fmt(p.mu * G) + ') = ' + fmt(S.Nc) + ' N');
+      arr.push('隔离 m₂：F − N₁₂ − μm₂g = m₂a（验证）');
+    }
+    arr.push('相互作用力：N₁₂ = N₂₁ = ' + fmt(S.Nc) + ' N（牛顿第三定律）');
+    return arr;
+  }
+  function statusHTML() {
+    const p = readParams();
+    if (S.static) return '🚫 系统<b>静止</b>：F = ' + fmt(p.F) + ' N ≤ 总最大静摩擦 μ(m₁+m₂)g = ' + fmt(p.mu * (p.m1 + p.m2) * G) + ' N。';
+    return '🚀 两物块<b>一起匀加速</b>，a = ' + fmt(S.a) + ' m/s²。' + (p.apply === 'm1'
+      ? '<br>接触力 N₁₂ = m₂(a + μg) = ' + fmt(S.Nc) + ' N（隔离 m₂ 求得）。'
+      : '<br>接触力 N₂₁ = m₁(a + μg) = ' + fmt(S.Nc) + ' N（隔离 m₁ 求得）。')
+      + '<br>💡 比较：换施力对象后接触力变为 ' + fmt(S.Nc) + ' N，体会整体法与隔离法。';
+  }
+  function updateUI() {
+    const p = readParams();
+    $('readouts').innerHTML =
+      '<span class="chip">t = <b>' + fmt(sim.t) + ' s</b></span>' +
+      '<span class="chip">x = <b>' + fmt(S.x) + ' m</b></span>' +
+      '<span class="chip" style="color:#60a5fa">v = <b>' + fmt(S.v) + ' m/s</b></span>' +
+      '<span class="chip" style="color:#34d399">a = <b>' + fmt(S.a) + ' m/s²</b></span>' +
+      '<span class="chip" style="color:#06b6d4">N接触 = <b>' + fmt(S.Nc) + ' N</b></span>';
+    $('statusbar').textContent = S.static ? '系统静止（F ≤ 总静摩擦）' : '一起匀加速：a = ' + fmt(S.a) + ' m/s²，接触力 N = ' + fmt(S.Nc) + ' N';
+    renderForces(forces());
+    renderEqns(eqns());
+    renderEnergy(null);
+    renderStatus(statusHTML());
+    drawSchematic();
+  }
+  function drawSchematic() {
+    const fit = fitFACanvas(); if (!fit) return;
+    const { c, w, h } = fit;
+    const p = readParams();
+    c.strokeStyle = '#94a3b8'; c.lineWidth = 2;
+    c.beginPath(); c.moveTo(30, 195); c.lineTo(w - 30, 195); c.stroke();
+    const whole = faMode === 'whole';
+    const c1x = w / 2 - 62, c2x = w / 2 + 62, by = 160, bw = 104, bh = 48;
+    if (whole) {
+      // 整体：虚线框
+      c.strokeStyle = '#06b6d4'; c.setLineDash([8, 5]); c.lineWidth = 2;
+      c.strokeRect(w / 2 - 130, by - 58, 260, 92);
+      c.setLineDash([]);
+      c.fillStyle = '#0891b2'; c.font = 'bold 11px sans-serif'; c.textAlign = 'center';
+      c.fillText('整体（m₁ + m₂）', w / 2, by - 66);
+      rect2D(c, c1x, by, bw, bh, 0, '#ccfbf1', '#0d9488');
+      rect2D(c, c2x, by, bw, bh, 0, '#ccfbf1', '#0d9488');
+      c.fillStyle = '#0f766e'; c.font = 'bold 12px sans-serif'; c.textAlign = 'center';
+      c.fillText('m₁', c1x, by + 4); c.fillText('m₂', c2x, by + 4);
+      const M = p.m1 + p.m2;
+      const mgT = M * G;
+      arrow2D(c, w / 2, by - 24, 0, 48, CSS.gravity, '(m₁+m₂)g = ' + fmt(mgT));
+      arrow2D(c, w / 2, by + 24, 0, -48, CSS.normal, 'N总');
+      if (p.apply === 'm1') arrow2D(c, w / 2 - 130, by, 44, 0, CSS.applied, 'F = ' + fmt(p.F));
+      else arrow2D(c, w / 2 + 130, by, 44, 0, CSS.applied, 'F = ' + fmt(p.F));
+      if (Math.abs(S.fTotal) > 1e-6) arrow2D(c, w / 2, by + 24, -40, 0, CSS.friction, 'f总 = ' + fmt(Math.abs(S.fTotal)));
+      c.fillStyle = '#0f172a'; c.textAlign = 'left'; c.font = 'bold 12px sans-serif';
+      c.fillText('整体法：F − μ(m₁+m₂)g = (m₁+m₂)a', 30, 22);
+      c.fillText('a = ' + fmt(S.a) + ' m/s²', 30, 40);
+    } else {
+      rect2D(c, c1x, by, bw, bh, 0, '#ccfbf1', '#0d9488');
+      rect2D(c, c2x, by, bw, bh, 0, '#ccfbf1', '#0d9488');
+      c.fillStyle = '#0f766e'; c.font = 'bold 12px sans-serif'; c.textAlign = 'center';
+      c.fillText('m₁ = ' + fmt(p.m1), c1x, by - 14); c.fillText('m₂ = ' + fmt(p.m2), c2x, by - 14);
+      c.fillText('kg', c1x, by + 4); c.fillText('kg', c2x, by + 4);
+      const mg1 = p.m1 * G, mg2 = p.m2 * G;
+      arrow2D(c, c1x, by - 24, 0, 34, CSS.gravity, 'm₁g');
+      arrow2D(c, c1x, by + 24, 0, -34, CSS.normal, 'N₁');
+      arrow2D(c, c2x, by - 24, 0, 34, CSS.gravity, 'm₂g');
+      arrow2D(c, c2x, by + 24, 0, -34, CSS.normal, 'N₂');
+      if (p.apply === 'm1') {
+        arrow2D(c, c1x - bw / 2, by, 44, 0, CSS.applied, 'F = ' + fmt(p.F));
+        arrow2D(c, c2x + bw / 2, by, 40, 0, CSS.contact, 'N₁₂ = ' + fmt(S.Nc));
+        arrow2D(c, c1x + bw / 2, by, -40, 0, CSS.contact, 'N₂₁');
+      } else {
+        arrow2D(c, c2x + bw / 2, by, 44, 0, CSS.applied, 'F = ' + fmt(p.F));
+        arrow2D(c, c1x + bw / 2, by, 40, 0, CSS.contact, 'N₂₁ = ' + fmt(S.Nc));
+        arrow2D(c, c2x - bw / 2, by, -40, 0, CSS.contact, 'N₁₂');
+      }
+      if (!S.static) {
+        if (Math.abs(S.f1) > 1e-6) arrow2D(c, c1x, by + 24, -30, 0, CSS.friction, 'f₁');
+        if (Math.abs(S.f2) > 1e-6) arrow2D(c, c2x, by + 24, -30, 0, CSS.friction, 'f₂');
+      } else {
+        if (Math.abs(S.f1) > 1e-6) arrow2D(c, c1x, by + 24, -30, 0, CSS.friction, 'f₁');
+        if (Math.abs(S.f2) > 1e-6) arrow2D(c, c2x, by + 24, -30, 0, CSS.friction, 'f₂');
+      }
+      c.fillStyle = '#0f172a'; c.textAlign = 'left'; c.font = 'bold 12px sans-serif';
+      c.fillText('隔离法：分别分析 m₁、m₂（点击上方按钮切换整体法）', 30, 22);
+      c.fillText('N₁₂ = N₂₁ = ' + fmt(S.Nc) + ' N', 30, 40);
+    }
+  }
+  function setFAMode(mode) {
+    faMode = mode;
+    const btn = $('faModeBtn');
+    if (btn) { btn.textContent = faMode === 'whole' ? '当前：整体法 ▸ 切隔离法' : '当前：隔离法 ▸ 切整体法'; btn.classList.toggle('on', faMode === 'whole'); }
+  }
+  function dispose() { scene.remove(grp); }
+  return {
+    id: 'linked',
+    series: [
+      { k: 'x', label: '位移 x / m', color: '#f87171' },
+      { k: 'v', label: '速度 v / (m·s⁻¹)', color: '#60a5fa' },
+      { k: 'a', label: '加速度 a / (m·s⁻²)', color: '#34d399' }
+    ],
+    knowledge: '<ul><li><b>整体法</b>求加速度：把系统看成一个整体，内力（接触力）相消。</li><li><b>隔离法</b>求内力：隔离受力简单的物体列方程。</li><li>推 m₁ 时接触力 N₁₂ = m₂(a + μg)；推 m₂ 时 N₂₁ = m₁(a + μg)。</li><li>相互作用力（N₁₂ 与 N₂₁）等大反向——牛顿第三定律。</li><li>先整体求 a，再隔离求内力，是高考必考套路。</li></ul>',
+    build, reset, step, sync, plotValues, updateUI, dispose, setFAMode,
+    getFAMode: () => faMode,
+    faExtra: 'linked',
+    cam: { pos: [8, 5, 11], target: [3, 0.8, 0] }
+  };
+}
+
+/* ============================================================
+   模型六：弹簧连接体（两物块 + 弹簧）
+   ============================================================ */
+function makeSpringLinkedModel() {
+  const S = { x1: 0, x2: 3, v1: 0, v2: 0, F: 0, l: 3 };
+  const L0 = 3;
+  let b1, b2, springMesh, slab;
+  const grp = new THREE.Group();
+
+  function readParams() {
+    return { m1: val('springlinked-m1'), m2: val('springlinked-m2'), k: val('springlinked-k'), x0: val('springlinked-x0'), xtype: $('springlinked-xtype').value, vc0: val('springlinked-vc0') };
+  }
+  function reset() {
+    const p = readParams();
+    S.x1 = 0;
+    S.l = p.xtype === 'compress' ? L0 - p.x0 : L0 + p.x0;
+    S.x2 = S.x1 + S.l;
+    S.v1 = p.vc0; S.v2 = p.vc0;
+    S.F = 0;
+    sim.t = 0;
+  }
+  function build() {
+    const p = readParams();
+    slab = makeSlab(24, 1.7, 0.1, 0.05);
+    slab.position.x = 12;
+    grp.add(slab);
+    b1 = makeBlock(p.m1, 0xfacc15);
+    b2 = makeBlock(p.m2, 0xfb923c);
+    grp.add(b1.mesh);
+    grp.add(b2.mesh);
+    springMesh = makeSpringMesh(L0, 12, 0.15);
+    springMesh.userData.len = -1;
+    grp.add(springMesh);
+    scene.add(grp);
+    reset();
+  }
+  function step(h) {
+    const p = readParams();
+    S.l = S.x2 - S.x1;
+    const F = p.k * (S.l - L0);
+    S.F = F;
+    S.v1 += F / p.m1 * h;
+    S.v2 += -F / p.m2 * h;
+    S.x1 += S.v1 * h;
+    S.x2 += S.v2 * h;
+  }
+  function sync() {
+    const p = readParams();
+    b1.mesh.position.set(S.x1, 0.07 + b1.s / 2, 0);
+    b2.mesh.position.set(S.x2, 0.07 + b2.s / 2, 0);
+    const springLen = clamp(S.l - (b1.s + b2.s) / 2, 0.25, 10);
+    if (Math.abs(springMesh.userData.len - springLen) > 0.01) {
+      grp.remove(springMesh); springMesh.geometry.dispose();
+      springMesh = makeSpringMesh(springLen, 12, 0.15);
+      springMesh.userData.len = springLen;
+      grp.add(springMesh);
+    }
+    springMesh.position.set((S.x1 + S.x2) / 2, 0.07 + Math.max(b1.s, b2.s) / 2, 0);
+    const Xc = (p.m1 * S.x1 + p.m2 * S.x2) / (p.m1 + p.m2);
+    sim.follow.set(Xc, 1.1, 0);
+
+    const o1 = b1.mesh.position.clone(), o2 = b2.mesh.position.clone();
+    const btm1 = o1.clone(); btm1.y -= b1.s / 2;   // 接触面
+    const btm2 = o2.clone(); btm2.y -= b2.s / 2;
+    const i1 = o1.clone(); i1.x += b1.s / 2;       // 内侧弹簧挂钩点
+    const i2 = o2.clone(); i2.x -= b2.s / 2;
+    let n = 0;
+    if (showForces()) {
+      placeArrow(n++, o1, new THREE.Vector3(0, -1, 0), p.m1 * G, COL.gravity);
+      placeArrow(n++, btm1, new THREE.Vector3(0, 1, 0), p.m1 * G, COL.normal);
+      placeArrow(n++, o2, new THREE.Vector3(0, -1, 0), p.m2 * G, COL.gravity);
+      placeArrow(n++, btm2, new THREE.Vector3(0, 1, 0), p.m2 * G, COL.normal);
+      if (Math.abs(S.F) > 1e-6) {
+        placeArrow(n++, i1, new THREE.Vector3(Math.sign(S.F), 0, 0), Math.abs(S.F), COL.spring);
+        placeArrow(n++, i2, new THREE.Vector3(-Math.sign(S.F), 0, 0), Math.abs(S.F), COL.spring);
+      }
+      if (showVel()) {
+        if (Math.abs(S.v1) > 1e-9) placeArrow(n++, o1.clone().add(new THREE.Vector3(0, 0.8, 0)), new THREE.Vector3(Math.sign(S.v1), 0, 0), Math.abs(S.v1) * 0.9, COL.velocity);
+        if (Math.abs(S.v2) > 1e-9) placeArrow(n++, o2.clone().add(new THREE.Vector3(0, 0.8, 0)), new THREE.Vector3(Math.sign(S.v2), 0, 0), Math.abs(S.v2) * 0.9, COL.velocity);
+      }
+    }
+    clearPools(n);
+    if (showLabels()) {
+      let i = 0;
+      if (Math.abs(S.F) > 1e-6) {
+        placeLabel(i++, 'F₁ = ' + fmt(S.F) + ' N', o1.clone().add(new THREE.Vector3(Math.sign(S.F) * 1.6, 0.5, 0)));
+        placeLabel(i++, 'F₂ = ' + fmt(-S.F) + ' N', o2.clone().add(new THREE.Vector3(-Math.sign(S.F) * 1.6, 0.5, 0)));
+      }
+      placeLabel(i++, 'm₁', o1.clone().add(new THREE.Vector3(0, -1.0, 0)));
+      placeLabel(i++, 'm₂', o2.clone().add(new THREE.Vector3(0, -1.0, 0)));
+      if (showVel()) {
+        if (Math.abs(S.v1) > 1e-9) placeLabel(i++, 'v₁ = ' + fmt(S.v1) + ' m/s', o1.clone().add(new THREE.Vector3(0, 1.7, 0)));
+        if (Math.abs(S.v2) > 1e-9) placeLabel(i++, 'v₂ = ' + fmt(S.v2) + ' m/s', o2.clone().add(new THREE.Vector3(0, 1.7, 0)));
+      }
+      for (let j = i; j < labelPool.length; j++) labelPool[j].visible = false;
+    }
+    if (Math.abs(blockSize(p.m1) - b1.s) > 1e-4) { grp.remove(b1.mesh); b1 = makeBlock(p.m1, 0xfacc15); grp.add(b1.mesh); }
+    if (Math.abs(blockSize(p.m2) - b2.s) > 1e-4) { grp.remove(b2.mesh); b2 = makeBlock(p.m2, 0xfb923c); grp.add(b2.mesh); }
+  }
+  function plotValues() {
+    const p = readParams();
+    const Xc = (p.m1 * S.x1 + p.m2 * S.x2) / (p.m1 + p.m2);
+    return { x1: S.x1, x2: S.x2, Xc, dl: S.l - L0 };
+  }
+  function forces() {
+    const p = readParams();
+    const list = [
+      { name: 'G₁ / G₂', color: CSS.gravity, dir: '竖直向下', val: fmt(p.m1 * G) + ' / ' + fmt(p.m2 * G) + ' N' },
+      { name: 'N₁ / N₂', color: CSS.normal, dir: '竖直向上', val: fmt(p.m1 * G) + ' / ' + fmt(p.m2 * G) + ' N' }
+    ];
+    if (Math.abs(S.F) > 1e-6) {
+      list.push({ name: 'F₁（m₁ 受弹力）', color: CSS.spring, dir: S.F > 0 ? '水平向右（拉）' : '水平向左（推）', val: fmt(Math.abs(S.F)) + ' N' });
+      list.push({ name: 'F₂（m₂ 受弹力）', color: CSS.spring, dir: S.F > 0 ? '水平向左（拉）' : '水平向右（推）', val: fmt(Math.abs(S.F)) + ' N' });
+    }
+    return list;
+  }
+  function eqns() {
+    const p = readParams();
+    const M = p.m1 + p.m2;
+    const mu = p.m1 * p.m2 / M;
+    const w = Math.sqrt(p.k / mu);
+    const T = 2 * Math.PI / w;
+    const Vc = (p.m1 * S.v1 + p.m2 * S.v2) / M;
+    const dl = S.l - L0;
+    return [
+      '弹簧弹力 F = k(l − l₀) = ' + fmt(p.k) + ' × ' + fmt(dl) + ' = ' + fmt(S.F) + ' N',
+      '对 m₁、m₂：F₁ = F，F₂ = −F（牛顿第三定律，等大反向）',
+      '质心速度 v_c = (m₁v₁+m₂v₂)/M = ' + fmt(Vc) + ' m/s（恒定不变）',
+      '约化质量 μ = m₁m₂/(m₁+m₂) = ' + fmt(mu) + ' kg',
+      '相对振动 ω = √(k/μ) = ' + fmt(w) + ' rad/s，T = ' + fmt(T) + ' s'
+    ];
+  }
+  function statusHTML() {
+    const p = readParams();
+    const M = p.m1 + p.m2;
+    const mu = p.m1 * p.m2 / M;
+    const w = Math.sqrt(p.k / mu);
+    const T = 2 * Math.PI / w;
+    const Vc = (p.m1 * S.v1 + p.m2 * S.v2) / M;
+    const A1 = mu / p.m1 * Math.abs(S.l - L0), A2 = mu / p.m2 * Math.abs(S.l - L0);
+    return '⚙️ 两物块做<b>相对简谐运动</b>，同时质心<b>匀速平移</b>。<br>' +
+      '相对振动周期 T = 2π√(μ/k) = ' + fmt(T) + ' s；质心速度 v_c = ' + fmt(Vc) + ' m/s。<br>' +
+      '振幅比 A₁ : A₂ = m₂ : m₁（此处 A₁ ≈ ' + fmt(A1) + ' m，A₂ ≈ ' + fmt(A2) + ' m）。<br>' +
+      '<span style="color:#475569">弹簧恢复原长瞬间：两物块速度达到极值、弹力为零。</span>';
+  }
+  function updateUI() {
+    const p = readParams();
+    const dl = S.l - L0;
+    $('readouts').innerHTML =
+      '<span class="chip">t = <b>' + fmt(sim.t) + ' s</b></span>' +
+      '<span class="chip">Δl = <b>' + fmt(dl) + ' m</b></span>' +
+      '<span class="chip" style="color:#60a5fa">v₁ = <b>' + fmt(S.v1) + ' m/s</b></span>' +
+      '<span class="chip" style="color:#38bdf8">v₂ = <b>' + fmt(S.v2) + ' m/s</b></span>' +
+      '<span class="chip" style="color:#a855f7">F弹 = <b>' + fmt(S.F) + ' N</b></span>';
+    $('statusbar').textContent = '质心匀速 + 相对简谐：F = ' + fmt(S.F) + ' N，Δl = ' + fmt(dl) + ' m';
+    renderForces(forces());
+    renderEqns(eqns());
+    const Ek1 = 0.5 * p.m1 * S.v1 * S.v1, Ek2 = 0.5 * p.m2 * S.v2 * S.v2, Ep = 0.5 * p.k * dl * dl;
+    renderEnergy([
+      { label: 'Ek₁', color: '#facc15', val: fmt(Ek1) },
+      { label: 'Ek₂', color: '#fb923c', val: fmt(Ek2) },
+      { label: '弹性势能 Ep', color: '#a855f7', val: fmt(Ep) },
+      { label: '总能量 E', color: '#16a34a', val: fmt(Ek1 + Ek2 + Ep) }
+    ], Math.max(Ek1 + Ek2 + Ep, 1e-9));
+    renderStatus(statusHTML());
+    drawSchematic();
+  }
+  function drawSchematic() {
+    const fit = fitFACanvas(); if (!fit) return;
+    const { c, w, h } = fit;
+    const p = readParams();
+    c.strokeStyle = '#94a3b8'; c.lineWidth = 2;
+    c.beginPath(); c.moveTo(30, 195); c.lineTo(w - 30, 195); c.stroke();
+    const by = 150, bw = 34, bh = 46;
+    const sep = clamp(S.l * 42, bw + 24, w - 140);   // 质心间距（屏幕），随形变实时变化
+    const c1x = w / 2 - sep / 2, c2x = w / 2 + sep / 2;
+    rect2D(c, c1x, by, bw, bh, 0, '#fef9c3', '#ca8a04');
+    rect2D(c, c2x, by, bw, bh, 0, '#ffedd5', '#c2410c');
+    c.fillStyle = '#854d0e'; c.font = 'bold 11px sans-serif'; c.textAlign = 'center';
+    c.fillText('m₁=' + fmt(p.m1), c1x, by - 28);
+    c.fillText('m₂=' + fmt(p.m2), c2x, by - 28);
+    // 弹簧（随 Δl 伸缩）
+    const sx0 = c1x + bw / 2, sx1 = c2x - bw / 2;
+    c.strokeStyle = '#a855f7'; c.lineWidth = 2.5;
+    c.beginPath(); c.moveTo(sx0, by);
+    const coils = 6;
+    for (let i = 1; i <= coils * 2; i++) {
+      const tx = sx0 + (sx1 - sx0) * i / (coils * 2);
+      const ty = by + (i % 2 === 0 ? -10 : 10);
+      c.lineTo(tx, ty);
+    }
+    c.stroke();
+    const mg1 = p.m1 * G, mg2 = p.m2 * G;
+    arrow2D(c, c1x, by - 23, 0, 30, CSS.gravity, 'm₁g');
+    arrow2D(c, c1x, by + 23, 0, -30, CSS.normal, 'N₁');
+    arrow2D(c, c2x, by - 23, 0, 30, CSS.gravity, 'm₂g');
+    arrow2D(c, c2x, by + 23, 0, -30, CSS.normal, 'N₂');
+    if (Math.abs(S.F) > 1e-6) {
+      arrow2D(c, c1x, by, Math.sign(S.F) * 40, 0, CSS.spring, 'F₁ = ' + fmt(S.F));
+      arrow2D(c, c2x, by, -Math.sign(S.F) * 40, 0, CSS.spring, 'F₂ = ' + fmt(-S.F));
+    }
+    if (showVel()) {
+      if (Math.abs(S.v1) > 1e-9) arrow2D(c, c1x, by - 60, Math.sign(S.v1) * 24, 0, CSS.velocity, 'v₁');
+      if (Math.abs(S.v2) > 1e-9) arrow2D(c, c2x, by - 60, Math.sign(S.v2) * 24, 0, CSS.velocity, 'v₂');
+    }
+    c.fillStyle = '#0f172a'; c.textAlign = 'left'; c.font = 'bold 12px sans-serif';
+    c.fillText('受力分析 · 弹簧连接体（F₁ = −F₂，质心匀速）', 30, 22);
+    c.fillText('Δl = ' + fmt(S.l - L0) + ' m（' + (S.l - L0 > 0.01 ? '拉伸' : S.l - L0 < -0.01 ? '压缩' : '原长') + '）', 30, 40);
+  }
+  function dispose() { scene.remove(grp); }
+  return {
+    id: 'springlinked',
+    series: [
+      { k: 'x1', label: 'x₁ / m', color: '#f87171' },
+      { k: 'x2', label: 'x₂ / m', color: '#60a5fa' },
+      { k: 'Xc', label: '质心 Xc / m', color: '#c084fc', dash: true },
+      { k: 'dl', label: '形变 Δl / m', color: '#f472b6' }
+    ],
+    knowledge: '<ul><li>系统合外力为零：<b>质心做匀速直线运动</b>（动量守恒）。</li><li>相对运动是简谐运动：ω = √(k/μ)，μ = m₁m₂/(m₁+m₂) 为约化质量。</li><li>两物块受弹力等大反向，各自加速度与质量成反比。</li><li>振幅与质量成反比：A₁ : A₂ = m₂ : m₁。</li><li>弹簧恢复原长瞬间弹力为零、相对速度最大。</li></ul>',
+    build, reset, step, sync, plotValues, updateUI, dispose,
+    cam: { pos: [8, 4.5, 11], target: [2.5, 1, 0] }
+  };
+}
+
+/* ============================================================
+   模型注册 / 切换
+   ============================================================ */
+const MODEL_FACTORIES = {
+  slider: makeSliderModel,
+  incline: makeInclineModel,
+  belt: makeBeltModel,
+  spring: makeSpringModel,
+  linked: makeLinkedModel,
+  springlinked: makeSpringLinkedModel
+};
+
+function switchModel(id) {
+  if (active) active.dispose();
+  active = MODEL_FACTORIES[id]();
+  graph.setSeries(active.series);
+  graph.clear();
+  sim.t = 0;
+  sim.running = false;
+  $('btnPlay').textContent = '▶ 播放';
+  $('statusbar').textContent = '点击「▶ 播放」开始模拟';
+  // 面板
+  document.querySelectorAll('.ctlgroup').forEach(g => g.classList.remove('show'));
+  $('cg-' + id).classList.add('show');
+  $('angleBadge').style.display = (id === 'incline') ? '' : 'none';
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.model === id));
+  // 模型特有右栏控件
+  if (active.faExtra === 'linked') {
+    $('faExtra').innerHTML = '<button id="faModeBtn">当前：隔离法 ▸ 切整体法</button>';
+    $('faModeBtn').addEventListener('click', () => active.setFAMode(active.getFAMode() === 'whole' ? 'isolate' : 'whole'));
+  } else {
+    $('faExtra').innerHTML = '';
+  }
+  if (id === 'incline') {
+    $('faDecomp').parentElement.style.display = '';
+  } else {
+    $('faDecomp').parentElement.style.display = 'none';
+  }
+  if (id !== 'belt') $('faRelative').parentElement.style.display = 'none';
+  else $('faRelative').parentElement.style.display = '';
+  $('faKnowledge').innerHTML = active.knowledge;
+  active.build();
+  active.reset();
+  // 镜头
+  camera.position.set(active.cam.pos[0], active.cam.pos[1], active.cam.pos[2]);
+  controls.target.set(active.cam.target[0], active.cam.target[1], active.cam.target[2]);
+  camera.lookAt(controls.target);
+}
+
+/* ============================================================
+   主循环
+   ============================================================ */
+let clock = null;
+function animate() {
+  requestAnimationFrame(animate);
+  if (!clock) clock = new THREE.Clock();
+  const dtReal = Math.min(clock.getDelta(), 0.05);
+  sim.lastDt = dtReal;
+  if (sim.running && active) {
+    const dt = dtReal * sim.timeScale;
+    const n = Math.max(1, Math.ceil(dt / 0.002));
+    const h = dt / n;
+    for (let i = 0; i < n; i++) active.step(h);
+    sim.t += dt;
+    graph.push(sim.t, active.plotValues());
+  }
+  if (active) {
+    active.sync();
+    if ($('chkFollow').checked) controls.target.lerp(sim.follow, 0.14);
+    controls.update();
+    active.updateUI();
+    graph.draw();
+  }
+  renderer.render(scene, camera);
+}
+function stepOnce() {
+  if (!active) return;
+  if (sim.running) { sim.running = false; $('btnPlay').textContent = '▶ 播放'; }
+  const dt = 0.05;
+  const n = Math.max(1, Math.ceil(dt / 0.002));
+  const h = dt / n;
+  for (let i = 0; i < n; i++) active.step(h);
+  sim.t += dt;
+  graph.push(sim.t, active.plotValues());
+  active.sync();
+  active.updateUI();
+  graph.draw();
+}
+
+/* ============================================================
+   预设场景
+   ============================================================ */
+function setVal(id, v) { $(id).value = v; $(id + '-num').value = v; const ve = $(id + '-v'); if (ve) ve.textContent = fmt(parseFloat(v)); }
+function applySliderPreset(i) {} // 占位（已由 PRESETS 接管）
+const PRESETS = {
+  slider: [
+    { name: '默认场景（恒力加速）', apply: () => { setVal('slider-m', 2); setVal('slider-mu', 0.2); setVal('slider-v0', 0); setVal('slider-F', 10); setVal('slider-L', 30); setVal('slider-x0', 2); } },
+    { name: '① 匀速直线运动（无摩擦）', apply: () => { setVal('slider-m', 2); setVal('slider-mu', 0); setVal('slider-v0', 3); setVal('slider-F', 0); setVal('slider-L', 30); setVal('slider-x0', 2); } },
+    { name: '② 刹车减速问题', apply: () => { setVal('slider-m', 2); setVal('slider-mu', 0.3); setVal('slider-v0', 6); setVal('slider-F', 0); setVal('slider-L', 30); setVal('slider-x0', 2); } },
+    { name: '③ 恒力加速（有摩擦）', apply: () => { setVal('slider-m', 2); setVal('slider-mu', 0.2); setVal('slider-v0', 0); setVal('slider-F', 10); setVal('slider-L', 30); setVal('slider-x0', 2); } },
+    { name: '④ 推不动的箱子（静摩擦）', apply: () => { setVal('slider-m', 2); setVal('slider-mu', 0.5); setVal('slider-v0', 0); setVal('slider-F', 6); setVal('slider-L', 30); setVal('slider-x0', 2); } }
+  ],
+  incline: [
+    { name: '默认场景（30° 粗糙斜面）', apply: () => { setVal('incline-th', 30); setVal('incline-m', 2); setVal('incline-mu', 0.15); setVal('incline-v0', 0); setVal('incline-s0', 8); setVal('incline-L', 10); } },
+    { name: '① 光滑斜面下滑（30°）', apply: () => { setVal('incline-th', 30); setVal('incline-m', 2); setVal('incline-mu', 0); setVal('incline-v0', 0); setVal('incline-s0', 8); setVal('incline-L', 10); } },
+    { name: '② 粗糙斜面下滑（37°）', apply: () => { setVal('incline-th', 37); setVal('incline-m', 2); setVal('incline-mu', 0.25); setVal('incline-v0', 0); setVal('incline-s0', 9); setVal('incline-L', 10); } },
+    { name: '③ 临界平衡（tanθ = μ）', apply: () => { setVal('incline-th', 16.7); setVal('incline-m', 2); setVal('incline-mu', 0.3); setVal('incline-v0', 0); setVal('incline-s0', 8); setVal('incline-L', 10); } },
+    { name: '④ 上滑又返回（往返运动）', apply: () => { setVal('incline-th', 30); setVal('incline-m', 2); setVal('incline-mu', 0.2); setVal('incline-v0', 4); setVal('incline-s0', 2); setVal('incline-L', 10); } }
+  ],
+  belt: [
+    { name: '默认场景（轻放物块）', apply: () => { setVal('belt-vb', 2); setVal('belt-v0', 0); setVal('belt-mu', 0.2); setVal('belt-L', 10); setVal('belt-x0', 0.5); } },
+    { name: '① 轻放物块（0 → 带速）', apply: () => { setVal('belt-vb', 2); setVal('belt-v0', 0); setVal('belt-mu', 0.2); setVal('belt-L', 10); setVal('belt-x0', 0.5); } },
+    { name: '② 初速大于带速（减速共速）', apply: () => { setVal('belt-vb', 2); setVal('belt-v0', 4); setVal('belt-mu', 0.2); setVal('belt-L', 10); setVal('belt-x0', 0.5); } },
+    { name: '③ 逆向冲上传送带', apply: () => { setVal('belt-vb', 2); setVal('belt-v0', -3); setVal('belt-mu', 0.2); setVal('belt-L', 10); setVal('belt-x0', 6); } },
+    { name: '④ 短传送带（全程加速离开）', apply: () => { setVal('belt-vb', 4); setVal('belt-v0', 0); setVal('belt-mu', 0.2); setVal('belt-L', 3); setVal('belt-x0', 0.3); } }
+  ],
+  spring: [
+    { name: '默认场景（标准简谐运动）', apply: () => { setVal('spring-m', 1); setVal('spring-k', 10); setVal('spring-x0', 1); setVal('spring-v0', 0); setVal('spring-b', 0); } },
+    { name: '① 标准简谐运动', apply: () => { setVal('spring-m', 1); setVal('spring-k', 10); setVal('spring-x0', 1); setVal('spring-v0', 0); setVal('spring-b', 0); } },
+    { name: '② 质量加倍（对比周期）', apply: () => { setVal('spring-m', 4); setVal('spring-k', 10); setVal('spring-x0', 1); setVal('spring-v0', 0); setVal('spring-b', 0); } },
+    { name: '③ 阻尼振动', apply: () => { setVal('spring-m', 1); setVal('spring-k', 10); setVal('spring-x0', 1); setVal('spring-v0', 0); setVal('spring-b', 0.4); } },
+    { name: '④ 冲击起振（x₀=0, v₀≠0）', apply: () => { setVal('spring-m', 1); setVal('spring-k', 10); setVal('spring-x0', 0); setVal('spring-v0', 2.5); setVal('spring-b', 0); } }
+  ],
+  linked: [
+    { name: '默认场景（光滑地面）', apply: () => { setVal('linked-m1', 2); setVal('linked-m2', 3); setVal('linked-F', 10); setVal('linked-mu', 0); $('linked-apply').value = 'm1'; } },
+    { name: '① 光滑地面（整体法）', apply: () => { setVal('linked-m1', 2); setVal('linked-m2', 3); setVal('linked-F', 10); setVal('linked-mu', 0); $('linked-apply').value = 'm1'; } },
+    { name: '② 粗糙地面（隔离法）', apply: () => { setVal('linked-m1', 2); setVal('linked-m2', 3); setVal('linked-F', 10); setVal('linked-mu', 0.1); $('linked-apply').value = 'm1'; } },
+    { name: '③ 推右边的物块（比较内力）', apply: () => { setVal('linked-m1', 2); setVal('linked-m2', 3); setVal('linked-F', 10); setVal('linked-mu', 0); $('linked-apply').value = 'm2'; } },
+    { name: '④ 推不动（静摩擦）', apply: () => { setVal('linked-m1', 2); setVal('linked-m2', 3); setVal('linked-F', 10); setVal('linked-mu', 0.4); $('linked-apply').value = 'm1'; } }
+  ],
+  springlinked: [
+    { name: '默认场景（等质量压缩释放）', apply: () => { setVal('springlinked-m1', 1); setVal('springlinked-m2', 1); setVal('springlinked-k', 10); setVal('springlinked-x0', 0.5); $('springlinked-xtype').value = 'compress'; setVal('springlinked-vc0', 0); } },
+    { name: '① 等质量压缩释放', apply: () => { setVal('springlinked-m1', 1); setVal('springlinked-m2', 1); setVal('springlinked-k', 10); setVal('springlinked-x0', 0.5); $('springlinked-xtype').value = 'compress'; setVal('springlinked-vc0', 0); } },
+    { name: '② 不等质量（质心静止）', apply: () => { setVal('springlinked-m1', 1); setVal('springlinked-m2', 3); setVal('springlinked-k', 10); setVal('springlinked-x0', 0.5); $('springlinked-xtype').value = 'compress'; setVal('springlinked-vc0', 0); } },
+    { name: '③ 质心匀速平移 + 振动', apply: () => { setVal('springlinked-m1', 1); setVal('springlinked-m2', 3); setVal('springlinked-k', 10); setVal('springlinked-x0', 0.4); $('springlinked-xtype').value = 'compress'; setVal('springlinked-vc0', 1); } },
+    { name: '④ 拉伸后释放', apply: () => { setVal('springlinked-m1', 1); setVal('springlinked-m2', 1); setVal('springlinked-k', 10); setVal('springlinked-x0', 0.5); $('springlinked-xtype').value = 'stretch'; setVal('springlinked-vc0', 0); } }
+  ]
+};
+
+/* ============================================================
+   初始化
+   ============================================================ */
+function init() {
+  initThree();
+
+  // 选项卡
+  document.querySelectorAll('.tab').forEach(t => {
+    t.addEventListener('click', () => switchModel(t.dataset.model));
+  });
+
+  // 工具栏
+  $('btnPlay').addEventListener('click', () => { if (!active) return; sim.running = true; $('btnPlay').textContent = '▶ 播放中'; });
+  $('btnPause').addEventListener('click', () => { sim.running = false; $('btnPlay').textContent = '▶ 播放'; });
+  $('btnStep').addEventListener('click', stepOnce);
+  $('btnReset').addEventListener('click', () => { if (!active) return; active.reset(); graph.clear(); sim.t = 0; });
+  $('selSpeed').addEventListener('change', e => { sim.timeScale = parseFloat(e.target.value); });
+  $('selWindow').addEventListener('change', e => { graph.tMax = parseFloat(e.target.value); });
+
+  // 预设
+  for (const id of Object.keys(PRESETS)) {
+    const sel = $(id + '-preset');
+    sel.innerHTML = PRESETS[id].map((p, i) => '<option value="' + i + '">' + p.name + '</option>').join('');
+    sel.addEventListener('change', () => {
+      PRESETS[id][parseInt(sel.value)].apply();
+      if (active) { active.reset(); graph.clear(); sim.t = 0; }
+      if (id === 'incline' && active) active.onParam('th');
+    });
+  }
+
+  // 参数绑定（值变化时只读入参数；重置后生效或实时生效）
+  const bindAll = {
+    slider: ['m', 'mu', 'v0', 'F', 'L', 'x0'],
+    incline: ['th', 'm', 'mu', 'v0', 's0', 'L'],
+    belt: ['vb', 'v0', 'mu', 'm', 'L', 'x0'],
+    spring: ['m', 'k', 'x0', 'v0', 'b'],
+    linked: ['m1', 'm2', 'F', 'mu'],
+    springlinked: ['m1', 'm2', 'k', 'x0', 'vc0']
+  };
+  for (const id of Object.keys(bindAll)) {
+    for (const k of bindAll[id]) {
+      bind(id + '-' + k, () => {
+        if (!active || active.id !== id) return;
+        if (active.onParam) active.onParam(k);
+        if (id === 'slider' || id === 'incline') active.updateUI();
+      });
+    }
+  }
+  // 斜面角度按钮
+  document.querySelectorAll('#cg-incline .btnrow button').forEach(b => {
+    b.addEventListener('click', () => {
+      const r = $('incline-th');
+      let v = clamp(parseFloat(r.value) + parseFloat(b.dataset.d), 0, 85);
+      r.value = v; $('incline-th-num').value = fmt(v, 1);
+      const ve = $('incline-th-v'); if (ve) ve.textContent = fmt(v);
+      if (active && active.id === 'incline') active.onParam('th');
+    });
+  });
+  $('linked-apply').addEventListener('change', () => { if (active && active.id === 'linked') { active.reset(); graph.clear(); sim.t = 0; } });
+  $('springlinked-xtype').addEventListener('change', () => { if (active && active.id === 'springlinked') { active.reset(); graph.clear(); sim.t = 0; } });
+
+  // 帮助
+  $('helpBtn').addEventListener('click', () => { $('helpModal').hidden = false; });
+  $('helpClose').addEventListener('click', () => { $('helpModal').hidden = true; });
+  $('helpModal').addEventListener('click', e => { if (e.target === $('helpModal')) $('helpModal').hidden = true; });
+
+  switchModel('slider');
+  animate();
+}
+init();
+</script>
+</body>
+</html>
